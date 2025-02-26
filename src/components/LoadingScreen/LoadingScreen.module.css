@@ -1,0 +1,15 @@
+.container {
+  @apply min-h-screen flex items-center justify-center bg-gray-50;
+}
+
+.content {
+  @apply text-center;
+}
+
+.icon {
+  @apply h-12 w-12 text-sky-600 mx-auto animate-pulse;
+}
+
+.text {
+  @apply mt-4 text-lg font-medium text-gray-900;
+}

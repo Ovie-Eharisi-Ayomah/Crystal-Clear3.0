@@ -1,0 +1,55 @@
+.container {
+  @apply min-h-screen bg-gradient-to-b from-sky-50 to-white;
+}
+
+.nav {
+  @apply border-b bg-white/80 backdrop-blur-sm;
+}
+
+.navContent {
+  @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+.navWrapper {
+  @apply flex h-16 justify-between;
+}
+
+.logo {
+  @apply flex flex-shrink-0 items-center;
+}
+
+.logoIcon {
+  @apply h-8 w-8 text-sky-600;
+}
+
+.logoText {
+  @apply ml-2 text-xl font-bold text-sky-900;
+}
+
+.navButtons {
+  @apply flex items-center space-x-4;
+}
+
+.mainContent {
+  @apply relative;
+}
+
+.contentWrapper {
+  @apply mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8;
+}
+
+.textContent {
+  @apply text-center;
+}
+
+.title {
+  @apply text-4xl font-bold tracking-tight text-sky-900 sm:text-6xl;
+}
+
+.description {
+  @apply mt-6 text-lg leading-8 text-gray-600;
+}
+
+.buttons {
+  @apply mt-10 flex items-center justify-center gap-x-6;
+}

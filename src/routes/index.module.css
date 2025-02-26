@@ -1,0 +1,4 @@
+/* Main routes container */
+.container {
+  @apply min-h-screen;
+}

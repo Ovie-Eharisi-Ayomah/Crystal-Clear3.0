@@ -1,0 +1,47 @@
+.container {
+  @apply space-y-6;
+}
+
+.title {
+  @apply text-2xl font-semibold text-gray-900;
+}
+
+.grid {
+  @apply grid gap-6 sm:grid-cols-2 lg:grid-cols-3;
+}
+
+.card {
+  @apply overflow-hidden rounded-lg bg-white shadow;
+}
+
+.cardContent {
+  @apply p-5;
+}
+
+.cardHeader {
+  @apply flex items-center;
+}
+
+.icon {
+  @apply h-6 w-6 text-gray-400 flex-shrink-0;
+}
+
+.cardBody {
+  @apply ml-5 w-0 flex-1;
+}
+
+.cardLabel {
+  @apply truncate text-sm font-medium text-gray-500;
+}
+
+.cardValue {
+  @apply mt-1 text-3xl font-semibold tracking-tight text-gray-900;
+}
+
+.cardFooter {
+  @apply bg-gray-50 px-5 py-3;
+}
+
+.footerLink {
+  @apply text-sm font-medium text-sky-700 hover:text-sky-900;
+}

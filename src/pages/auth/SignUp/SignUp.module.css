@@ -1,0 +1,131 @@
+.container {
+  @apply min-h-screen bg-gradient-to-b from-sky-50 to-white flex flex-col justify-center py-12 sm:px-6 lg:px-8;
+}
+
+.header {
+  @apply sm:mx-auto sm:w-full sm:max-w-md;
+}
+
+.logo {
+  @apply flex justify-center;
+}
+
+.logoIcon {
+  @apply h-12 w-12 text-sky-600;
+}
+
+.title {
+  @apply mt-6 text-center text-3xl font-bold tracking-tight text-gray-900;
+}
+
+.formContainer {
+  @apply mt-8 sm:mx-auto sm:w-full sm:max-w-md;
+}
+
+.formWrapper {
+  @apply bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10;
+}
+
+.userTypeSection {
+  @apply mb-6;
+}
+
+.userTypeLabel {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+.userTypeGrid {
+  @apply grid grid-cols-2 gap-4;
+}
+
+.userTypeButton {
+  @apply px-4 py-2 text-sm font-medium rounded-md;
+}
+
+.userTypeButtonActive {
+  @apply bg-sky-100 text-sky-900;
+}
+
+.userTypeButtonInactive {
+  @apply bg-white text-gray-700 border border-gray-300;
+}
+
+.socialButtons {
+  @apply grid grid-cols-2 gap-3 mb-6;
+}
+
+.socialIcon {
+  @apply h-5 w-5 mr-2;
+}
+
+.divider {
+  @apply relative mb-6;
+}
+
+.dividerLine {
+  @apply absolute inset-0 flex items-center;
+}
+
+.dividerBorder {
+  @apply w-full border-t border-gray-300;
+}
+
+.dividerText {
+  @apply relative flex justify-center text-sm;
+}
+
+.dividerTextContent {
+  @apply bg-white px-2 text-gray-500;
+}
+
+.form {
+  @apply space-y-6;
+}
+
+.formGroup {
+  @apply space-y-1;
+}
+
+.label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.input {
+  @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500;
+}
+
+.helpText {
+  @apply mt-1 text-sm text-gray-500;
+}
+
+.error {
+  @apply rounded-md bg-red-50 p-4;
+}
+
+.errorContent {
+  @apply flex;
+}
+
+.errorIcon {
+  @apply flex-shrink-0;
+}
+
+.errorIconSvg {
+  @apply h-5 w-5 text-red-400;
+}
+
+.errorMessage {
+  @apply ml-3;
+}
+
+.errorText {
+  @apply text-sm text-red-700;
+}
+
+.footer {
+  @apply text-center text-sm text-gray-600;
+}
+
+.footerLink {
+  @apply font-medium text-sky-600 hover:text-sky-500;
+}

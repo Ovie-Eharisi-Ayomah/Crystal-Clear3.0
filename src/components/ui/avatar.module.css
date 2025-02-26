@@ -1,0 +1,27 @@
+/* Base avatar styles */
+.base {
+  @apply relative rounded-full bg-sky-100 flex items-center justify-center overflow-hidden;
+}
+
+/* Sizes */
+.sm {
+  @apply h-8 w-8;
+}
+
+.md {
+  @apply h-10 w-10;
+}
+
+.lg {
+  @apply h-12 w-12;
+}
+
+/* Image styles */
+.image {
+  @apply h-full w-full object-cover;
+}
+
+/* Initials styles */
+.initials {
+  @apply font-medium text-sky-900;
+}

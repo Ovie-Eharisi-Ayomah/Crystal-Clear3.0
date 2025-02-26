@@ -1,0 +1,87 @@
+.container {
+  @apply min-h-screen bg-gradient-to-b from-sky-50 to-white flex flex-col justify-center py-12 sm:px-6 lg:px-8;
+}
+
+.header {
+  @apply sm:mx-auto sm:w-full sm:max-w-md;
+}
+
+.logo {
+  @apply flex justify-center;
+}
+
+.logoIcon {
+  @apply h-12 w-12 text-sky-600;
+}
+
+.title {
+  @apply mt-6 text-center text-3xl font-bold tracking-tight text-gray-900;
+}
+
+.formContainer {
+  @apply mt-8 sm:mx-auto sm:w-full sm:max-w-md;
+}
+
+.formWrapper {
+  @apply bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10;
+}
+
+.form {
+  @apply space-y-6;
+}
+
+.formGroup {
+  @apply space-y-1;
+}
+
+.label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.input {
+  @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500;
+}
+
+.error {
+  @apply rounded-md bg-red-50 p-4;
+}
+
+.errorText {
+  @apply text-sm text-red-700;
+}
+
+.divider {
+  @apply relative mt-6;
+}
+
+.dividerLine {
+  @apply absolute inset-0 flex items-center;
+}
+
+.dividerBorder {
+  @apply w-full border-t border-gray-300;
+}
+
+.dividerText {
+  @apply relative flex justify-center text-sm;
+}
+
+.dividerTextContent {
+  @apply bg-white px-2 text-gray-500;
+}
+
+.socialButtons {
+  @apply mt-6 grid grid-cols-2 gap-3;
+}
+
+.socialIcon {
+  @apply h-5 w-5 mr-2;
+}
+
+.footer {
+  @apply mt-6 text-center text-sm text-gray-600;
+}
+
+.footerLink {
+  @apply font-medium text-sky-600 hover:text-sky-500;
+}

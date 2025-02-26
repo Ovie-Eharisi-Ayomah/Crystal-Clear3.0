@@ -1,0 +1,55 @@
+/* Base button styles */
+.base {
+  @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-950 disabled:pointer-events-none disabled:opacity-50;
+}
+
+/* Variants */
+.default {
+  @apply bg-sky-900 text-white shadow hover:bg-sky-900/90;
+}
+
+.secondary {
+  @apply bg-sky-100 text-sky-900 shadow-sm hover:bg-sky-100/80;
+}
+
+.outline {
+  @apply border border-sky-200 bg-white shadow-sm hover:bg-sky-100;
+}
+
+.ghost {
+  @apply hover:bg-sky-100 hover:text-sky-900;
+}
+
+.link {
+  @apply text-sky-900 underline-offset-4 hover:underline;
+}
+
+.destructive {
+  @apply bg-red-600 text-white shadow hover:bg-red-700;
+}
+
+/* Sizes */
+.sizeDefault {
+  @apply h-9 px-4 py-2;
+}
+
+.sizeSm {
+  @apply h-8 rounded-md px-3 text-xs;
+}
+
+.sizeLg {
+  @apply h-10 rounded-md px-8;
+}
+
+/* Loading spinner */
+.spinner {
+  @apply mr-2 h-4 w-4 animate-spin;
+}
+
+.spinnerCircle {
+  @apply opacity-25;
+}
+
+.spinnerPath {
+  @apply opacity-75;
+}

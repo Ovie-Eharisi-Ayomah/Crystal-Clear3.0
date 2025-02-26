@@ -1,0 +1,78 @@
+/* Overlay */
+.overlay {
+  @apply fixed inset-0 z-50 bg-gray-900/80 lg:hidden;
+}
+
+/* Container */
+.container {
+  @apply fixed inset-0 flex;
+}
+
+.sidebar {
+  @apply relative flex w-full max-w-xs flex-1 flex-col bg-white;
+}
+
+/* Close button */
+.closeButton {
+  @apply absolute top-0 right-0 -mr-12 pt-2;
+}
+
+.closeIcon {
+  @apply ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white;
+}
+
+/* Content */
+.content {
+  @apply flex flex-1 flex-col overflow-y-auto pb-4;
+}
+
+/* Logo section */
+.logo {
+  @apply flex h-16 shrink-0 items-center px-6;
+}
+
+.logoIcon {
+  @apply h-8 w-8 text-sky-600;
+}
+
+.logoText {
+  @apply ml-2 text-xl font-bold text-sky-900;
+}
+
+/* Navigation */
+.nav {
+  @apply mt-8 flex-1 space-y-1 px-4;
+}
+
+.navLink {
+  @apply flex items-center rounded-md px-2 py-2 text-sm font-medium;
+}
+
+.navLinkActive {
+  @apply bg-sky-50 text-sky-900;
+}
+
+.navLinkInactive {
+  @apply text-gray-700 hover:bg-sky-50 hover:text-sky-900;
+}
+
+.navIcon {
+  @apply mr-3 h-5 w-5 flex-shrink-0;
+}
+
+.navIconActive {
+  @apply text-sky-900;
+}
+
+.navIconInactive {
+  @apply text-gray-400;
+}
+
+.navIconInactive:hover {
+  @apply text-sky-900;
+}
+
+/* Footer */
+.footer {
+  @apply border-t border-gray-200 p-4;
+}

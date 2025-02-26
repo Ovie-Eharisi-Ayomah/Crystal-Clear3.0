@@ -1,0 +1,171 @@
+.container {
+  @apply space-y-6;
+}
+
+.header {
+  @apply flex items-center gap-4 mb-6;
+}
+
+.backButton {
+  @apply mr-2;
+}
+
+.backIcon {
+  @apply h-4 w-4 mr-2;
+}
+
+.title {
+  @apply text-2xl font-semibold text-gray-900;
+}
+
+.grid {
+  @apply grid gap-6 lg:grid-cols-2;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow p-6;
+}
+
+.cardTitle {
+  @apply text-lg font-medium text-gray-900 mb-4;
+}
+
+.propertyInfo {
+  @apply space-y-4;
+}
+
+.infoGroup {
+  @apply space-y-1;
+}
+
+.infoLabel {
+  @apply text-sm font-medium text-gray-500;
+}
+
+.infoValue {
+  @apply mt-1 text-sm text-gray-900;
+}
+
+.windowTypesList {
+  @apply list-disc list-inside;
+}
+
+.noWindowTypes {
+  @apply text-gray-500;
+}
+
+.imagesGrid {
+  @apply grid grid-cols-2 gap-4;
+}
+
+.imageContainer {
+  @apply relative cursor-pointer group;
+}
+
+.propertyImage {
+  @apply w-full h-32 object-cover rounded-lg;
+}
+
+.imageOverlay {
+  @apply absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg flex items-center justify-center;
+}
+
+.imageIcon {
+  @apply h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity;
+}
+
+.modal {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4;
+}
+
+.modalContent {
+  @apply relative max-w-4xl w-full;
+}
+
+.modalImage {
+  @apply w-full h-auto max-h-[80vh] object-contain rounded-lg;
+}
+
+.modalClose {
+  @apply absolute top-4 right-4 bg-white rounded-full p-2 shadow-lg;
+}
+
+.jobRequirements {
+  @apply space-y-4;
+}
+
+.requirementItem {
+  @apply flex items-center;
+}
+
+.requirementIcon {
+  @apply h-5 w-5 text-gray-400 mr-2;
+}
+
+.requirementContent {
+  @apply space-y-1;
+}
+
+.requirementLabel {
+  @apply text-sm font-medium text-gray-900;
+}
+
+.requirementValue {
+  @apply text-sm text-gray-500;
+}
+
+.description {
+  @apply mt-2 text-sm text-gray-500;
+}
+
+.quoteForm {
+  @apply space-y-4;
+}
+
+.formGroup {
+  @apply space-y-1;
+}
+
+.label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.input {
+  @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500;
+}
+
+.textarea {
+  @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500;
+}
+
+.error {
+  @apply rounded-md bg-red-50 p-4;
+}
+
+.errorText {
+  @apply text-sm text-red-700;
+}
+
+.loadingState {
+  @apply flex items-center justify-center min-h-[400px];
+}
+
+.loadingSpinner {
+  @apply animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mx-auto;
+}
+
+.loadingText {
+  @apply mt-2 text-gray-500;
+}
+
+.errorState {
+  @apply text-center py-8;
+}
+
+.errorTitle {
+  @apply text-lg font-medium text-gray-900 mb-2;
+}
+
+.errorMessage {
+  @apply text-gray-500 mb-4;
+}

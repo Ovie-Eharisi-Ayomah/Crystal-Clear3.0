@@ -1,0 +1,189 @@
+/* Status colors */
+.statusNew {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.statusQuoted {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.statusAccepted {
+  @apply bg-green-100 text-green-800;
+}
+
+.statusCompleted {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.statusCancelled {
+  @apply bg-red-100 text-red-800;
+}
+
+/* Layout */
+.container {
+  @apply space-y-6;
+}
+
+.header {
+  @apply flex justify-between items-center mb-6;
+}
+
+.headerTitle {
+  @apply text-2xl font-semibold text-gray-900;
+}
+
+.headerSubtitle {
+  @apply mt-1 text-sm text-gray-500;
+}
+
+.emptyState {
+  @apply text-center py-12 bg-white rounded-lg shadow;
+}
+
+.emptyStateTitle {
+  @apply text-lg font-medium text-gray-900 mb-2;
+}
+
+.emptyStateText {
+  @apply text-gray-500 mb-4;
+}
+
+.jobCard {
+  @apply bg-white rounded-lg shadow-sm overflow-hidden;
+}
+
+.jobCardContent {
+  @apply p-6;
+}
+
+.jobCardHeader {
+  @apply flex items-center justify-between mb-6;
+}
+
+.jobCardStatus {
+  @apply flex items-center space-x-2;
+}
+
+.jobCardStatusBadge {
+  @apply px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2;
+}
+
+.jobCardDate {
+  @apply text-sm text-gray-500;
+}
+
+.jobCardActions {
+  @apply flex items-center space-x-2;
+}
+
+.jobCardGrid {
+  @apply grid md:grid-cols-2 gap-6;
+}
+
+.jobCardSection {
+  @apply space-y-4;
+}
+
+.jobCardSectionTitle {
+  @apply text-sm font-medium text-gray-900 mb-2;
+}
+
+.jobCardAddress {
+  @apply flex items-start;
+}
+
+.jobCardAddressIcon {
+  @apply h-5 w-5 text-gray-400 mt-1 mr-2 flex-shrink-0;
+}
+
+.jobCardAddressTitle {
+  @apply text-lg font-medium text-gray-900;
+}
+
+.jobCardAddressText {
+  @apply text-gray-500;
+}
+
+.jobCardDetail {
+  @apply flex items-center;
+}
+
+.jobCardDetailIcon {
+  @apply h-5 w-5 text-gray-400 mr-2 flex-shrink-0;
+}
+
+.jobCardDetailText {
+  @apply text-sm text-gray-900;
+}
+
+.jobCardDetailSubtext {
+  @apply text-sm text-gray-500;
+}
+
+.jobCardWindowTypes {
+  @apply space-y-1 text-sm text-gray-700;
+}
+
+.jobCardWindowType {
+  @apply flex items-center before:content-['•'] before:mr-2 before:text-gray-400;
+}
+
+.jobCardDescription {
+  @apply mt-4;
+}
+
+.jobCardDescription p {
+  @apply text-sm text-gray-700;
+}
+
+.jobCardQuotes {
+  @apply mt-4;
+}
+
+.jobCardQuotesTitle {
+  @apply text-sm font-medium text-gray-900 mb-3;
+}
+
+.jobCardQuotesList {
+  @apply space-y-3;
+}
+
+.jobCardQuoteItem {
+  @apply flex items-center justify-between p-3 bg-gray-50 rounded-lg;
+}
+
+.jobCardQuoteAmount {
+  @apply font-medium text-gray-900;
+}
+
+.jobCardQuoteBusiness {
+  @apply text-sm text-gray-500;
+}
+
+.jobCardImages {
+  @apply mt-6 pt-6 border-t border-gray-200;
+}
+
+.jobCardImageGrid {
+  @apply grid grid-cols-2 sm:grid-cols-4 gap-4;
+}
+
+.jobCardImage {
+  @apply w-full h-24 object-cover rounded-lg;
+}
+
+.loadingState {
+  @apply flex items-center justify-center min-h-[400px];
+}
+
+.loadingSpinner {
+  @apply animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mx-auto;
+}
+
+.loadingText {
+  @apply mt-2 text-gray-500;
+}
+
+.errorState {
+  @apply text-center py-8 text-red-600;
+}
