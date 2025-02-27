@@ -1,0 +1,131 @@
+.quote-compare-container {
+  margin: 24px 0;
+}
+
+.quote-compare-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+.quote-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.quote-compare-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.quote-compare-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.quote-compare-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.quote-compare-amount {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.quote-compare-status {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 9999px;
+}
+
+.quote-compare-status.accepted {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.quote-compare-status.rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.quote-compare-cleaner {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
+  margin-bottom: 10px;
+}
+
+.quote-compare-message {
+  background-color: #f9fafb;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+
+.quote-compare-message-label {
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.quote-compare-message p {
+  color: #111827;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.quote-compare-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.quote-compare-accept {
+  background-color: #059669;
+  color: white;
+  flex: 2;
+}
+
+.quote-compare-accept:hover {
+  background-color: #047857;
+}
+
+.quote-compare-decline {
+  flex: 1;
+}
+
+.quote-compare-empty {
+  padding: 24px;
+  text-align: center;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  color: #6b7280;
+}
+
+.quote-compare-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .quote-compare-grid {
+    grid-template-columns: 1fr;
+  }
+}

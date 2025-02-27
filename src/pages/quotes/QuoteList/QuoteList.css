@@ -1,0 +1,277 @@
+.quotes-list-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.quotes-list-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.back-button {
+  margin-right: 16px;
+}
+
+.quotes-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+  flex: 1;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.loading-spinner {
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #3b82f6;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-container {
+  text-align: center;
+  padding: 32px;
+  background-color: rgba(239, 68, 68, 0.05);
+  border-radius: 8px;
+  margin: 24px auto;
+  max-width: 500px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin: 24px auto;
+}
+
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #111827;
+}
+
+.empty-state p {
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+
+.jobs-with-quotes {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.job-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  overflow: hidden;
+}
+
+.job-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.property-info, .job-date {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.property-info h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #111827;
+}
+
+.property-info p, .job-date p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  color: #6b7280;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.quotes-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.quotes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.quote-card {
+  background-color: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.quote-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.quote-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.quote-amount {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.quote-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 9999px;
+}
+
+.status-badge-new {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge-accepted {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge-default {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.quote-cleaner {
+  font-size: 14px;
+  color: #4b5563;
+  margin-bottom: 12px;
+}
+
+.quote-message {
+  background-color: #ffffff;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.message-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.quote-message p {
+  font-size: 14px;
+  color: #111827;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.quote-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.accept-button {
+  background-color: #059669;
+  color: white;
+  flex: 2;
+}
+
+.accept-button:hover {
+  background-color: #047857;
+}
+
+.decline-button {
+  flex: 1;
+}
+
+.accepted-message, .rejected-message {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-top: 16px;
+}
+
+.accepted-message {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.rejected-message {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+@media (max-width: 768px) {
+  .quotes-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .job-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -1,0 +1,1 @@
+export { QuoteCompare } from './QuoteCompare';

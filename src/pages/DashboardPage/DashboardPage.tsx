@@ -10,13 +10,14 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const userType = user?.user_metadata?.user_type;
   const [jobCount, setJobCount] = useState(0);
+  const [quoteCount, setQuoteCount] = useState(0);
 
   useEffect(() => {
-    const fetchJobCount = async () => {
+    const fetchCounts = async () => {
       if (!user) return;
       
       try {
-        console.log('Fetching job count for user:', user.id, 'type:', userType);
+        console.log('Fetching counts for user:', user.id, 'type:', userType);
         
         // First, get a count of all jobs to verify there are any
         const { count: totalCount, error: totalError } = await supabase
@@ -32,31 +33,34 @@ export function DashboardPage() {
         // Now try the filtered query
         const { data, count, error } = await supabase
           .from('job_requests')
-          .select('*', { count: 'exact' });
+          .select(`
+            *,
+            quotes (*)
+          `);
           
         console.log('All jobs data:', data ? data.length : 0);
         
-        // Log all the jobs to see what's available
-        if (data) {
-          console.log('Jobs:', data.map(job => ({
-            id: job.id,
-            owner_id: job.owner_id,
-            status: job.status
-          })));
-        }
-        
         // Now apply the filter manually to debug
-        let filteredCount = 0;
+        let filteredJobCount = 0;
+        let filteredQuoteCount = 0;
         
         if (data) {
           if (userType === 'homeowner') {
-            filteredCount = data.filter(job => job.owner_id === user.id).length;
-            console.log('Filtered homeowner jobs:', filteredCount);
+            const userJobs = data.filter(job => job.owner_id === user.id);
+            filteredJobCount = userJobs.length;
+            
+            // Count jobs with quotes for this homeowner
+            filteredQuoteCount = userJobs.filter(job => 
+              job.quotes && job.quotes.length > 0
+            ).length;
+            
+            console.log('Filtered homeowner jobs:', filteredJobCount);
+            console.log('Jobs with quotes:', filteredQuoteCount);
           } else if (userType === 'cleaner') {
-            filteredCount = data.filter(job => 
+            filteredJobCount = data.filter(job => 
               job.status === 'new' || job.cleaner_id === user.id
             ).length;
-            console.log('Filtered cleaner jobs:', filteredCount);
+            console.log('Filtered cleaner jobs:', filteredJobCount);
           }
         }
         
@@ -64,17 +68,19 @@ export function DashboardPage() {
           throw error;
         }
         
-        console.log('DB count:', count, 'Filtered count:', filteredCount);
-        // Use the manually filtered count since it's more reliable
-        setJobCount(filteredCount);
+        console.log('DB count:', count, 'Filtered count:', filteredJobCount);
+        // Use the manually filtered counts
+        setJobCount(filteredJobCount);
+        setQuoteCount(filteredQuoteCount);
       } catch (error) {
-        console.error('Error fetching job count:', error);
+        console.error('Error fetching counts:', error);
         setJobCount(0);
+        setQuoteCount(0);
       }
     };
 
     if (user?.id) {
-      fetchJobCount();
+      fetchCounts();
     }
   }, [user?.id, userType]);
 
@@ -108,6 +114,36 @@ export function DashboardPage() {
                 <div className="text-sm">
                   <button
                     onClick={() => navigate('/dashboard/jobs')}
+                    className={styles.footerLink}
+                  >
+                    View all
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className={styles.card}>
+              <div className={styles.cardContent}>
+                <div className={styles.cardHeader}>
+                  <div className="flex-shrink-0">
+                    <ClipboardList className={styles.icon} />
+                  </div>
+                  <div className={styles.cardBody}>
+                    <dl>
+                      <dt className={styles.cardLabel}>
+                        Quotes Received
+                      </dt>
+                      <dd className={styles.cardValue}>
+                        {quoteCount}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.cardFooter}>
+                <div className="text-sm">
+                  <button
+                    onClick={() => navigate('/dashboard/quotes')}
                     className={styles.footerLink}
                   >
                     View all

@@ -10,6 +10,8 @@ import { JobList } from '@/pages/jobs/JobList';
 import { JobDetails } from '@/pages/jobs/JobDetails';
 import { SessionManagement } from '@/pages/auth/SessionManagement';
 import { Settings } from '@/pages/settings/Settings';
+import { QuoteList } from '@/pages/quotes/QuoteList';
+import { QuoteDetail } from '@/pages/quotes/QuoteDetail';
 
 export function DashboardRoutes() {
   return (
@@ -23,6 +25,8 @@ export function DashboardRoutes() {
         <Route path="/properties/:propertyId/request" element={<JobRequestForm />} />
         <Route path="/jobs" element={<JobList />} />
         <Route path="/jobs/:jobId" element={<JobDetails />} />
+        <Route path="/quotes" element={<QuoteList />} />
+        <Route path="/quotes/:quoteId" element={<QuoteDetail />} />
         <Route path="/sessions" element={<SessionManagement />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<div>Coming soon...</div>} />

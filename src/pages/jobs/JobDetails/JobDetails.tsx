@@ -20,6 +20,9 @@ import {
   ImageModal
 } from './components';
 
+// Import QuoteCompare component
+import { QuoteCompare } from '@/components/quotes/QuoteCompare';
+
 export function JobDetails() {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
@@ -54,10 +57,19 @@ export function JobDetails() {
             setQuoteSubmitted(true);
             setQuoteAmount(data.amount.toString());
             setQuoteMessage(data.message || '');
+          } else {
+            // Explicitly reset state if no quote exists
+            setQuoteSubmitted(false);
+            setQuoteAmount('');
+            setQuoteMessage('');
           }
         } catch (err) {
           // No quote exists, or error occurred
           console.error('Error checking for existing quote:', err);
+          // Make sure to reset the state in case of an error (no quote found)
+          setQuoteSubmitted(false);
+          setQuoteAmount('');
+          setQuoteMessage('');
         }
       }
     };
@@ -162,26 +174,63 @@ export function JobDetails() {
   const handleWithdrawQuote = async () => {
     setIsSubmitting(true);
     try {
-      // Delete the quote
-      const { error } = await supabase
+      console.log('Attempting to delete quote for job:', jobId, 'cleaner:', user?.id);
+      
+      // First, get the quote ID
+      const { data: quoteData, error: findError } = await supabase
+        .from('quotes')
+        .select('id')
+        .eq('job_request_id', jobId)
+        .eq('cleaner_id', user?.id)
+        .single();
+      
+      if (findError) {
+        console.error('Error finding quote to delete:', findError);
+        throw findError;
+      }
+      
+      if (!quoteData || !quoteData.id) {
+        console.error('No quote found to delete');
+        throw new Error('No quote found to delete');
+      }
+      
+      console.log('Found quote to delete:', quoteData.id);
+      
+      // Delete the quote by ID
+      const { error: deleteError } = await supabase
         .from('quotes')
         .delete()
-        .eq('job_request_id', jobId)
-        .eq('cleaner_id', user?.id);
+        .eq('id', quoteData.id);
       
-      if (error) throw error;
+      if (deleteError) {
+        console.error('Error deleting quote:', deleteError);
+        throw deleteError;
+      }
+      
+      console.log('Quote successfully deleted');
       
       // Reset the job status to 'new' if no other quotes exist
-      const { data: otherQuotes } = await supabase
+      const { data: otherQuotes, error: countError } = await supabase
         .from('quotes')
         .select('id')
         .eq('job_request_id', jobId);
+      
+      if (countError) {
+        console.error('Error checking other quotes:', countError);
+      }
+      
+      console.log('Remaining quotes for job:', otherQuotes?.length || 0);
         
       if (!otherQuotes || otherQuotes.length === 0) {
-        await supabase
+        console.log('No other quotes exist, resetting job status to new');
+        const { error: updateError } = await supabase
           .from('job_requests')
           .update({ status: 'new' })
           .eq('id', jobId);
+          
+        if (updateError) {
+          console.error('Error updating job status:', updateError);
+        }
       }
       
       // Reset state
@@ -189,7 +238,12 @@ export function JobDetails() {
       setQuoteAmount('');
       setQuoteMessage('');
       setShowWithdrawConfirm(false);
+      
+      // Show success message and reload the page after a brief delay
+      alert('Quote withdrawn successfully');
+      window.location.reload();
     } catch (err) {
+      console.error('Failed to withdraw quote:', err);
       setSubmitError(err instanceof Error ? err.message : 'Failed to withdraw quote');
     } finally {
       setIsSubmitting(false);
@@ -293,6 +347,20 @@ export function JobDetails() {
                   )}
                 </>
               )}
+            </div>
+          )}
+          
+          {/* Quote comparison for homeowners */}
+          {userType === 'homeowner' && job.quotes && job.quotes.length > 0 && (
+            <div className="quote-section bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">
+                Quotes Received
+              </h2>
+              <QuoteCompare 
+                quotes={job.quotes} 
+                onQuoteAccepted={() => window.location.reload()}
+                jobId={jobId!}
+              />
             </div>
           )}
         </div>
