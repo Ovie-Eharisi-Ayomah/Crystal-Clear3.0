@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout';
-import { DashboardPage } from '@/pages/DashboardPage';
+import { DashboardPage } from '@/pages/DashboardPage/DashboardPage';
 import { PropertyList } from '@/pages/properties/PropertyList';
 import { PropertyForm } from '@/pages/properties/PropertyForm';
 import { PropertyDetails } from '@/pages/properties/PropertyDetails';

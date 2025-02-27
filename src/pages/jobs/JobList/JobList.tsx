@@ -15,12 +15,14 @@ import {
   Trash2,
   User,
   Mail,
-  Phone
+  Phone,
+  PlusCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import styles from './JobList.module.css';
+import { createTestJob } from '@/utils/testData';
 
 const WINDOW_TYPES = {
   sliding: 'Sliding Windows',
@@ -38,6 +40,7 @@ export function JobList() {
   const navigate = useNavigate();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [creatingTestData, setCreatingTestData] = useState(false);
   const userType = user?.user_metadata?.user_type;
 
   const getStatusColor = (status: string) => {
@@ -147,6 +150,25 @@ export function JobList() {
     );
   }
 
+  // Function to generate test data for debugging purposes
+  const handleCreateTestJob = async () => {
+    if (!user) return;
+    
+    try {
+      setCreatingTestData(true);
+      await createTestJob({ 
+        id: user.id, 
+        email: user.email || '' 
+      });
+      window.location.reload(); // Reload to see the new job
+    } catch (err) {
+      console.error('Failed to create test job:', err);
+      alert('Failed to create test job. See console for details.');
+    } finally {
+      setCreatingTestData(false);
+    }
+  };
+
   if (error) {
     return (
       <div className={styles.errorState}>
@@ -155,7 +177,16 @@ export function JobList() {
     );
   }
 
-  const validJobs = jobs?.filter(job => job && job.property) || [];
+  // Debug info about all jobs
+  console.log('Jobs in JobList component:', jobs?.map(job => ({
+    id: job.id,
+    status: job.status,
+    hasProperty: !!job.property,
+    hasOwner: !!job.owner
+  })));
+  
+  // Use all jobs, handling missing properties in the UI
+  const validJobs = jobs || [];
 
   return (
     <div className={styles.container}>
@@ -192,6 +223,30 @@ export function JobList() {
               View My Properties
             </Button>
           )}
+          
+          {/* Developer information panel */}
+          <div className="mt-6 p-4 border border-dashed border-gray-300 rounded-md">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Why am I not seeing any jobs?</p>
+            
+            <div className="space-y-2 text-sm text-gray-600">
+              <p>
+                <strong>For Cleaners:</strong> Jobs will appear here when homeowners create cleaning requests.
+              </p>
+              <p>
+                <strong>For Developers:</strong> Here are potential issues:
+              </p>
+              <ol className="list-decimal pl-5 space-y-1 text-xs">
+                <li>No job requests exist in the database yet</li>
+                <li>RLS policies are preventing cleaners from seeing jobs</li>
+                <li>Jobs exist but don't have the 'new' status</li>
+                <li>Join queries are failing between tables</li>
+              </ol>
+              
+              <p className="text-xs mt-3">
+                To create jobs: log in as a homeowner, add a property, then create a cleaning request.
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-6">
@@ -252,20 +307,34 @@ export function JobList() {
 
                 <div className={styles.jobCardGrid}>
                   <div className={styles.jobCardSection}>
-                    <div className={styles.jobCardAddress}>
-                      <MapPin className={styles.jobCardAddressIcon} />
-                      <div>
-                        <h3 className={styles.jobCardAddressTitle}>
-                          {job.property.address_line1}
-                        </h3>
-                        {job.property.address_line2 && (
-                          <p className={styles.jobCardAddressText}>{job.property.address_line2}</p>
-                        )}
-                        <p className={styles.jobCardAddressText}>
-                          {job.property.city}, {job.property.postcode}
-                        </p>
+                    {job.property ? (
+                      <div className={styles.jobCardAddress}>
+                        <MapPin className={styles.jobCardAddressIcon} />
+                        <div>
+                          <h3 className={styles.jobCardAddressTitle}>
+                            {job.property.address_line1}
+                          </h3>
+                          {job.property.address_line2 && (
+                            <p className={styles.jobCardAddressText}>{job.property.address_line2}</p>
+                          )}
+                          <p className={styles.jobCardAddressText}>
+                            {job.property.city}, {job.property.postcode}
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className={styles.jobCardAddress}>
+                        <AlertCircle className={styles.jobCardAddressIcon} />
+                        <div>
+                          <h3 className={styles.jobCardAddressTitle}>
+                            Property Details Unavailable
+                          </h3>
+                          <p className={styles.jobCardAddressText}>
+                            Contact support for assistance
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     <div className={styles.jobCardDetail}>
                       <Calendar className={styles.jobCardDetailIcon} />
@@ -279,25 +348,39 @@ export function JobList() {
                       </div>
                     </div>
 
-                    <div className={styles.jobCardDetail}>
-                      <Home className={styles.jobCardDetailIcon} />
-                      <div>
-                        <p className={styles.jobCardDetailText}>
-                          {job.property.property_type}
-                        </p>
-                        <p className={styles.jobCardDetailSubtext}>
-                          {job.property.num_windows} windows · {job.property.num_floors} floor
-                          {job.property.num_floors > 1 ? 's' : ''}
-                        </p>
+                    {job.property ? (
+                      <div className={styles.jobCardDetail}>
+                        <Home className={styles.jobCardDetailIcon} />
+                        <div>
+                          <p className={styles.jobCardDetailText}>
+                            {job.property.property_type}
+                          </p>
+                          <p className={styles.jobCardDetailSubtext}>
+                            {job.property.num_windows} windows · {job.property.num_floors} floor
+                            {job.property.num_floors > 1 ? 's' : ''}
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className={styles.jobCardDetail}>
+                        <Home className={styles.jobCardDetailIcon} />
+                        <div>
+                          <p className={styles.jobCardDetailText}>
+                            Property Type Unavailable
+                          </p>
+                          <p className={styles.jobCardDetailSubtext}>
+                            Details not accessible
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     {userType === 'cleaner' && (
                       <div className={styles.jobCardDetail}>
                         <User className={styles.jobCardDetailIcon} />
                         <div>
                           <p className={styles.jobCardDetailText}>
-                            {job.owner.full_name}
+                            {job.owner ? job.owner.full_name : 'Owner Details Unavailable'}
                           </p>
                           <p className={styles.jobCardDetailSubtext}>
                             Property Owner
@@ -310,13 +393,19 @@ export function JobList() {
                   <div className={styles.jobCardSection}>
                     <div>
                       <h4 className={styles.jobCardSectionTitle}>Window Types</h4>
-                      <ul className={styles.jobCardWindowTypes}>
-                        {job.property.window_types.map((type) => (
-                          <li key={type} className={styles.jobCardWindowType}>
-                            {WINDOW_TYPES[type as keyof typeof WINDOW_TYPES]}
-                          </li>
-                        ))}
-                      </ul>
+                      {job.property && job.property.window_types ? (
+                        <ul className={styles.jobCardWindowTypes}>
+                          {job.property.window_types.map((type) => (
+                            <li key={type} className={styles.jobCardWindowType}>
+                              {WINDOW_TYPES[type as keyof typeof WINDOW_TYPES]}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className={styles.jobCardDetailSubtext}>
+                          Window type information unavailable
+                        </p>
+                      )}
                     </div>
 
                     {job.description && (
@@ -362,7 +451,7 @@ export function JobList() {
                   </div>
                 </div>
 
-                {job.property.images && job.property.images.length > 0 && (
+                {job.property && job.property.images && job.property.images.length > 0 && (
                   <div className={styles.jobCardImages}>
                     <h4 className={styles.jobCardSectionTitle}>Property Images</h4>
                     <div className={styles.jobCardImageGrid}>
