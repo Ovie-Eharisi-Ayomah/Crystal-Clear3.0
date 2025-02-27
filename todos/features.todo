@@ -14,8 +14,8 @@ Cleaner Job Features:
 
 Owner Job Features:
   ✔ Owners can only see their own properties @done(25-02-27 12:59)
-  - Owners can see all new job requests they have made
-  - Owners can see all quotes they have received for their job requests
+  ✔ Owners can see all new job requests they have made @done(25-02-27 15:29)
+  - Owners can see all quotes they have received for their job requests @started(25-02-27 15:29)
   - Owners can accept a quote for a job
   - Owners can reject a quote for a job
   - Owners can see all jobs they have accepted

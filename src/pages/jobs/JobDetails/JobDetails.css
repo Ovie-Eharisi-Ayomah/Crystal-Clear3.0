@@ -1,0 +1,15 @@
+.job-details-container {
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.quote-section {
+  transition: all 0.3s ease-in-out;
+}
+
+@media (max-width: 1024px) {
+  .job-details-container {
+    padding: 0.5rem;
+  }
+}

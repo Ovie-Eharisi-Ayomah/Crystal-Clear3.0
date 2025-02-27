@@ -1,0 +1,37 @@
+.image-modal {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.image-modal img {
+  animation: scaleIn 0.3s ease-in-out;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.close-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.close-button:hover {
+  background-color: #f9fafb;
+  transform: scale(1.1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

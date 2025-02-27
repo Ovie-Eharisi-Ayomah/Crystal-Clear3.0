@@ -1,0 +1,6 @@
+.quote-form input:focus,
+.quote-form textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+  border-color: #0284c7;
+}
