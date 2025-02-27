@@ -41,8 +41,38 @@ export function JobDetails() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [quoteSubmitted, setQuoteSubmitted] = useState(false);
+  const [showQuoteConfirm, setShowQuoteConfirm] = useState(false);
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
 
   const userType = user?.user_metadata?.user_type;
+
+  // Check if the cleaner has already submitted a quote when component loads
+  React.useEffect(() => {
+    const checkExistingQuote = async () => {
+      if (user && jobId && userType === 'cleaner') {
+        try {
+          const { data, error } = await supabase
+            .from('quotes')
+            .select('amount, message')
+            .eq('job_request_id', jobId)
+            .eq('cleaner_id', user.id)
+            .single();
+          
+          if (data) {
+            setQuoteSubmitted(true);
+            setQuoteAmount(data.amount.toString());
+            setQuoteMessage(data.message || '');
+          }
+        } catch (err) {
+          // No quote exists, or error occurred
+          console.error('Error checking for existing quote:', err);
+        }
+      }
+    };
+
+    checkExistingQuote();
+  }, [user, jobId, userType]);
 
   if (isLoading) {
     return (
@@ -71,8 +101,13 @@ export function JobDetails() {
     );
   }
 
-  const handleSubmitQuote = async (e: React.FormEvent) => {
+  const handleSubmitQuote = (e: React.FormEvent) => {
     e.preventDefault();
+    // Show confirmation dialog instead of immediately submitting
+    setShowQuoteConfirm(true);
+  };
+
+  const confirmAndSubmitQuote = async () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -95,11 +130,13 @@ export function JobDetails() {
 
       if (statusError) throw statusError;
 
-      navigate('/dashboard/jobs');
+      setQuoteSubmitted(true);
+      // Stay on the current page instead of navigating away
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Failed to submit quote');
     } finally {
       setIsSubmitting(false);
+      setShowQuoteConfirm(false);
     }
   };
 
@@ -321,56 +358,181 @@ export function JobDetails() {
           {userType === 'cleaner' && job.status === 'new' && (
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 mb-4">
-                Submit a Quote
+                {quoteSubmitted ? 'Quote Submitted' : 'Submit a Quote'}
               </h2>
               
-              <form onSubmit={handleSubmitQuote} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="amount"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Quote Amount (£)
-                  </label>
-                  <input
-                    type="number"
-                    id="amount"
-                    value={quoteAmount}
-                    onChange={(e) => setQuoteAmount(e.target.value)}
-                    min="0"
-                    step="0.01"
-                    required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="message"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Message
-                  </label>
-                  <textarea
-                    id="message"
-                    value={quoteMessage}
-                    onChange={(e) => setQuoteMessage(e.target.value)}
-                    rows={4}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500"
-                    placeholder="Add any notes or details about your quote"
-                  />
-                </div>
-
-                {submitError && (
-                  <div className="rounded-md bg-red-50 p-4">
-                    <div className="text-sm text-red-700">{submitError}</div>
+              {quoteSubmitted ? (
+                <div className="space-y-4">
+                  <div className="rounded-md bg-green-50 p-4 text-center">
+                    <div className="text-sm text-green-700 mb-2">
+                      Your quote has been successfully submitted!
+                    </div>
+                    <p className="text-gray-600 text-sm">
+                      Quote Amount: £{quoteAmount}
+                    </p>
+                    {quoteMessage && (
+                      <p className="text-gray-600 text-sm mt-2">
+                        Message: {quoteMessage}
+                      </p>
+                    )}
                   </div>
-                )}
+                  
+                  {showWithdrawConfirm ? (
+                    <div className="rounded-md bg-red-50 p-4 mb-4">
+                      <h3 className="text-sm font-medium text-red-800 mb-2">Withdraw Quote?</h3>
+                      <p className="text-sm text-red-700 mb-4">
+                        Are you sure you want to withdraw your quote? This action cannot be undone.
+                      </p>
+                      <div className="flex gap-3">
+                        <Button 
+                          variant="destructive"
+                          className="flex-1"
+                          onClick={async () => {
+                            setIsSubmitting(true);
+                            try {
+                              // Delete the quote
+                              const { error } = await supabase
+                                .from('quotes')
+                                .delete()
+                                .eq('job_request_id', jobId)
+                                .eq('cleaner_id', user?.id);
+                              
+                              if (error) throw error;
+                              
+                              // Reset the job status to 'new' if no other quotes exist
+                              const { data: otherQuotes } = await supabase
+                                .from('quotes')
+                                .select('id')
+                                .eq('job_request_id', jobId);
+                                
+                              if (!otherQuotes || otherQuotes.length === 0) {
+                                await supabase
+                                  .from('job_requests')
+                                  .update({ status: 'new' })
+                                  .eq('id', jobId);
+                              }
+                              
+                              // Reset state
+                              setQuoteSubmitted(false);
+                              setQuoteAmount('');
+                              setQuoteMessage('');
+                              setShowWithdrawConfirm(false);
+                            } catch (err) {
+                              setSubmitError(err instanceof Error ? err.message : 'Failed to withdraw quote');
+                            } finally {
+                              setIsSubmitting(false);
+                            }
+                          }}
+                          isLoading={isSubmitting}
+                        >
+                          Yes, Withdraw Quote
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => setShowWithdrawConfirm(false)}
+                          disabled={isSubmitting}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="destructive" 
+                      className="w-full"
+                      onClick={() => setShowWithdrawConfirm(true)}
+                    >
+                      Withdraw Quote
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {showQuoteConfirm ? (
+                    <div className="space-y-4">
+                      <div className="rounded-md bg-blue-50 p-4">
+                        <h3 className="text-sm font-medium text-blue-800 mb-2">Confirm Your Quote</h3>
+                        <div className="mb-4">
+                          <p className="text-gray-700 mb-1">Amount: <span className="font-medium">£{quoteAmount}</span></p>
+                          {quoteMessage && (
+                            <p className="text-gray-700">Message: <span className="italic">{quoteMessage}</span></p>
+                          )}
+                        </div>
+                        <p className="text-sm text-blue-700 mb-4">
+                          Are you sure you want to submit this quote? You can withdraw it later if needed.
+                        </p>
+                        <div className="flex gap-3">
+                          <Button 
+                            variant="default"
+                            className="flex-1"
+                            onClick={confirmAndSubmitQuote}
+                            isLoading={isSubmitting}
+                          >
+                            Confirm Quote
+                          </Button>
+                          <Button 
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => setShowQuoteConfirm(false)}
+                            disabled={isSubmitting}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSubmitQuote} className="space-y-4">
+                      <div>
+                        <label
+                          htmlFor="amount"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Quote Amount (£)
+                        </label>
+                        <input
+                          type="number"
+                          id="amount"
+                          value={quoteAmount}
+                          onChange={(e) => setQuoteAmount(e.target.value)}
+                          min="0"
+                          step="0.01"
+                          required
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500"
+                        />
+                      </div>
 
-                <Button type="submit" className="w-full" isLoading={isSubmitting}>
-                  Submit Quote
-                </Button>
-              </form>
+                      <div>
+                        <label
+                          htmlFor="message"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Message
+                        </label>
+                        <textarea
+                          id="message"
+                          value={quoteMessage}
+                          onChange={(e) => setQuoteMessage(e.target.value)}
+                          rows={4}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500"
+                          placeholder="Add any notes or details about your quote"
+                        />
+                      </div>
+
+                      {submitError && (
+                        <div className="rounded-md bg-red-50 p-4">
+                          <div className="text-sm text-red-700">{submitError}</div>
+                        </div>
+                      )}
+
+                      <Button type="submit" className="w-full">
+                        Submit Quote
+                      </Button>
+                    </form>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>

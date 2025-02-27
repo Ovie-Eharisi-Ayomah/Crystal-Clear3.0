@@ -1,0 +1,44 @@
+Cleaner Job Features:
+  ✔ Cleaners can see jobs @started(25-02-27 11:00) @done(25-02-27 12:11) @lasted(1h11m9s)
+  - Cleaners can see only new jobs in their area / service radius
+  ✔ Cleaners can click a submit quote button to submit a quote for a job @started(25-02-27 13:39) @done(25-02-27 13:39) @lasted(27s)
+  ✔ Cleaner sees a confirmation message when they try to submit a quote on a job @started(25-02-27 13:39) @done(25-02-27 14:04) @lasted(25m9s)
+  ✔ Cleaner cannot quote on a job if they have already quoted on it @started(25-02-27 14:04) @done(25-02-27 14:04) @lasted(26s)
+  - Cleaner can withdraw a quote before it is accepted by the owner
+  - Cleaners can see all jobs they have quoted on
+  - Cleaners can see all jobs they have accepted
+  - Cleaners can see all jobs they have completed
+  - Cleaners can see all jobs they have cancelled
+  - Cleaners can review owners after jobs are completed
+  - Cleaners can see all jobs they have received payments for
+
+Owner Job Features:
+  ✔ Owners can only see their own properties @done(25-02-27 12:59)
+  - Owners can see all new job requests they have made
+  - Owners can see all quotes they have received for their job requests
+  - Owners can accept a quote for a job
+  - Owners can reject a quote for a job
+  - Owners can see all jobs they have accepted
+  - Owners can see all jobs that have been completed
+  - Owners can see all jobs that have been cancelled
+  - Owners can review cleaners after jobs are completed
+
+Message Features:
+  - Cleaners can send messages to owners only on jobs they have accepted
+  - Owners can send messages to cleaners only on jobs they have accepted
+  - Messages are stored in the database
+  - Messages are displayed in the chat interface
+  - Messages are displayed in the order they are received
+
+Payment Features:
+  - Cleaners can request payment from owners after jobs are completed
+  - Owners can pay cleaners after jobs are completed
+  - Payments are stored in the database
+  - Payments are displayed in the payment interface
+  - Payments are displayed in the order they are received
+
+Dashboard Features:
+  ✔ Cleaners see a welcome message on the dashboard @started(25-02-27 13:02) @done(25-02-27 13:15) @lasted(13m)
+  ✔ Cleaners see the number of jobs available in their area @started(25-02-27 13:02) @done(25-02-27 13:15) @lasted(13m)
+  ✔ Homeowners see a welcome message on the dashboard @started(25-02-27 13:02) @done(25-02-27 13:15) @lasted(13m)
+  ✔ Homeowners see the number of active requests they have made @started(25-02-27 13:02) @done(25-02-27 13:15) @lasted(13m)
