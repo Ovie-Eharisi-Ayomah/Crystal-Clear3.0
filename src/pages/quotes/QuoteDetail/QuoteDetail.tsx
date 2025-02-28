@@ -126,21 +126,53 @@ export function QuoteDetail() {
 
     setActionLoading(true);
     try {
-      // Update the quote status
+      console.log('Accepting quote:', quote.id, 'for job:', quote.job_request.id, 'with cleaner:', quote.cleaner_id);
+      
+      // Direct update approach since stored procedure is not available
+      console.log('Fallback to direct update approach');
+      
+      // First update the job status to accepted and set the cleaner_id
+      const { error: jobError } = await supabase
+        .from('job_requests')
+        .update({ 
+          status: 'accepted',
+          cleaner_id: quote.cleaner_id 
+        })
+        .eq('id', quote.job_request.id);
+
+      if (jobError) {
+        console.error('Error updating job request:', jobError);
+        throw jobError;
+      }
+      
+      console.log('Job request updated successfully');
+      
+      // Then update the quote status
       const { error: quoteError } = await supabase
         .from('quotes')
         .update({ status: 'accepted' })
         .eq('id', quote.id);
 
-      if (quoteError) throw quoteError;
-
-      // Update the job request status
-      const { error: jobError } = await supabase
-        .from('job_requests')
-        .update({ status: 'accepted' })
-        .eq('id', quote.job_request.id);
-
-      if (jobError) throw jobError;
+      if (quoteError) {
+        console.error('Error updating quote status:', quoteError);
+        throw quoteError;
+      }
+      
+      console.log('Quote status updated successfully');
+      
+      // Reject all other quotes for this job
+      const { error: rejectError } = await supabase
+        .from('quotes')
+        .update({ status: 'rejected' })
+        .eq('job_request_id', quote.job_request.id)
+        .neq('id', quote.id);
+        
+      if (rejectError) {
+        console.error('Error rejecting other quotes:', rejectError);
+        // Continue with the process even if rejecting other quotes fails
+      }
+      
+      console.log('Quote accepted successfully via direct update');
 
       // Update the local state
       setQuote({
@@ -167,13 +199,20 @@ export function QuoteDetail() {
 
     setActionLoading(true);
     try {
+      console.log('Declining quote:', quote.id);
+      
       // Update the quote status
       const { error: quoteError } = await supabase
         .from('quotes')
         .update({ status: 'rejected' })
         .eq('id', quote.id);
 
-      if (quoteError) throw quoteError;
+      if (quoteError) {
+        console.error('Error updating quote status:', quoteError);
+        throw quoteError;
+      }
+      
+      console.log('Quote status updated successfully');
 
       // Update the local state
       setQuote({

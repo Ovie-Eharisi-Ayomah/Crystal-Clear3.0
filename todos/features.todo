@@ -20,7 +20,8 @@ Owner Job Features:
   ✔ Owners can see the cleaner's name and quote amount for each quote @started(25-02-28 08:38) @done(25-02-28 08:45) @lasted(7m17s)
   ✔ Owners can access the cleaner's profile from the quote @started(25-02-28 08:45) @done(25-02-28 08:56) @lasted(11m17s)
   ✔ Owners see a confirmation message when they click accept quote @started(25-02-28 09:02) @done(25-02-28 09:13) @lasted(11m55s)
-  - Owners can accept a quote for a job
+  - Owners can accept a quote for a job @started(25-02-28 09:20)
+  ☐ When a quote is accepted, all other quotes for the same job are automatically hidden @started(25-02-28 09:20)
   - Owners can reject a quote for a job
   - Owners can see all jobs they have accepted
   - Owners can see all jobs that have been completed

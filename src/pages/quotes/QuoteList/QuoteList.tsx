@@ -107,21 +107,63 @@ export function QuoteList() {
     
     setActionLoading(selectedQuoteId);
     try {
-      // Update the selected quote to accepted
+      console.log('Accepting quote:', selectedQuoteId, 'for job:', selectedQuoteJobId);
+      
+      // Find the cleaner_id for the selected quote
+      const { data: quoteData, error: quoteDataError } = await supabase
+        .from('quotes')
+        .select('cleaner_id')
+        .eq('id', selectedQuoteId)
+        .single();
+        
+      if (quoteDataError) {
+        console.error('Failed to retrieve quote data:', quoteDataError);
+        throw new Error('Failed to retrieve quote data');
+      }
+      
+      console.log('Found cleaner_id:', quoteData.cleaner_id);
+      
+      // Direct update approach since stored procedure is not available
+      console.log('Fallback to direct update approach');
+      
+      // First update the job status to accepted and set the cleaner_id
+      const { error: jobError } = await supabase
+        .from('job_requests')
+        .update({ 
+          status: 'accepted',
+          cleaner_id: quoteData.cleaner_id
+        })
+        .eq('id', selectedQuoteJobId);
+
+      if (jobError) {
+        console.error('Error updating job request:', jobError);
+        throw jobError;
+      }
+      
+      // Then update the selected quote to accepted
       const { error: quoteError } = await supabase
         .from('quotes')
         .update({ status: 'accepted' })
         .eq('id', selectedQuoteId);
 
-      if (quoteError) throw quoteError;
-
-      // Update the job status to accepted
-      const { error: jobError } = await supabase
-        .from('job_requests')
-        .update({ status: 'accepted' })
-        .eq('id', selectedQuoteJobId);
-
-      if (jobError) throw jobError;
+      if (quoteError) {
+        console.error('Error updating quote status:', quoteError);
+        throw quoteError;
+      }
+      
+      // Reject all other quotes for this job
+      const { error: rejectError } = await supabase
+        .from('quotes')
+        .update({ status: 'rejected' })
+        .eq('job_request_id', selectedQuoteJobId)
+        .neq('id', selectedQuoteId);
+        
+      if (rejectError) {
+        console.error('Error rejecting other quotes:', rejectError);
+        // Continue with the process even if rejecting other quotes fails
+      }
+      
+      console.log('Quote accepted successfully via direct update');
 
       // Close the modal and refresh
       setShowAcceptModal(false);
@@ -139,13 +181,20 @@ export function QuoteList() {
     
     setActionLoading(selectedQuoteId);
     try {
+      console.log('Declining quote:', selectedQuoteId);
+      
       // Update the quote status to rejected
       const { error: quoteError } = await supabase
         .from('quotes')
         .update({ status: 'rejected' })
         .eq('id', selectedQuoteId);
 
-      if (quoteError) throw quoteError;
+      if (quoteError) {
+        console.error('Error updating quote status:', quoteError);
+        throw quoteError;
+      }
+      
+      console.log('Quote status updated successfully');
 
       // Close the modal and refresh
       setShowDeclineModal(false);
@@ -254,78 +303,86 @@ export function QuoteList() {
               <h4 className="quotes-section-title">Quotes Received ({job.quotes?.length})</h4>
               
               <div className="quotes-grid">
-                {job.quotes?.map(quote => (
-                  <div 
-                    key={quote.id} 
-                    className="quote-card"
-                  >
-                    <div className="quote-header">
-                      <div className="quote-amount">£{quote.amount}</div>
-                      <div className={`quote-status ${getStatusBadgeClass(quote.status)}`}>
-                        {getStatusIcon(quote.status)}
-                        <span>{quote.status}</span>
+                {job.quotes?.map(quote => {
+                  // Hide rejected quotes if at least one quote has been accepted
+                  const hasAcceptedQuote = job.quotes?.some(q => q.status === 'accepted');
+                  if (hasAcceptedQuote && quote.status === 'rejected') {
+                    return null; // Don't show rejected quotes when one is accepted
+                  }
+                  
+                  return (
+                    <div 
+                      key={quote.id} 
+                      className={`quote-card ${quote.status === 'accepted' ? 'accepted-quote' : ''}`}
+                    >
+                      <div className="quote-header">
+                        <div className="quote-amount">£{quote.amount}</div>
+                        <div className={`quote-status ${getStatusBadgeClass(quote.status)}`}>
+                          {getStatusIcon(quote.status)}
+                          <span>{quote.status}</span>
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="quote-cleaner">
-                      <span>From: {quote.cleaner.business_name}</span>
-                      <Button 
-                        size="sm" 
-                        variant="link"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/dashboard/cleaners/${quote.cleaner.id}`);
-                        }}
-                        className="view-profile-link"
-                      >
-                        View Profile
-                      </Button>
-                    </div>
-                    
-                    {quote.message && (
-                      <div className="quote-message">
-                        <div className="message-label">Message:</div>
-                        <p>{quote.message}</p>
-                      </div>
-                    )}
-
-                    {job.status === 'quoted' && quote.status !== 'accepted' && quote.status !== 'rejected' && (
-                      <div className="quote-actions">
+  
+                      <div className="quote-cleaner">
+                        <span>From: {quote.cleaner.business_name}</span>
                         <Button 
                           size="sm" 
-                          onClick={() => handleAcceptQuote(job.id, quote.id)}
-                          isLoading={actionLoading === quote.id}
-                          className="accept-button"
+                          variant="link"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/dashboard/cleaners/${quote.cleaner.id}`);
+                          }}
+                          className="view-profile-link"
                         >
-                          Accept Quote
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleDeclineQuote(quote.id)}
-                          isLoading={actionLoading === quote.id}
-                          className="decline-button"
-                        >
-                          Decline
+                          View Profile
                         </Button>
                       </div>
-                    )}
-
-                    {quote.status === 'accepted' && (
-                      <div className="accepted-message">
-                        <CheckCircle className="h-5 w-5 mr-1" />
-                        You've accepted this quote
-                      </div>
-                    )}
-
-                    {quote.status === 'rejected' && (
-                      <div className="rejected-message">
-                        <XCircle className="h-5 w-5 mr-1" />
-                        You've declined this quote
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      
+                      {quote.message && (
+                        <div className="quote-message">
+                          <div className="message-label">Message:</div>
+                          <p>{quote.message}</p>
+                        </div>
+                      )}
+  
+                      {job.status === 'quoted' && quote.status !== 'accepted' && quote.status !== 'rejected' && !hasAcceptedQuote && (
+                        <div className="quote-actions">
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleAcceptQuote(job.id, quote.id)}
+                            isLoading={actionLoading === quote.id}
+                            className="accept-button"
+                          >
+                            Accept Quote
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleDeclineQuote(quote.id)}
+                            isLoading={actionLoading === quote.id}
+                            className="decline-button"
+                          >
+                            Decline
+                          </Button>
+                        </div>
+                      )}
+  
+                      {quote.status === 'accepted' && (
+                        <div className="accepted-message">
+                          <CheckCircle className="h-5 w-5 mr-1" />
+                          You've accepted this quote
+                        </div>
+                      )}
+  
+                      {quote.status === 'rejected' && (
+                        <div className="rejected-message">
+                          <XCircle className="h-5 w-5 mr-1" />
+                          You've declined this quote
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}

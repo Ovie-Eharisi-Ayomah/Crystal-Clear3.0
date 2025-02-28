@@ -56,21 +56,55 @@ export const QuoteCompare: React.FC<QuoteCompareProps> = ({
     setError(null);
     
     try {
-      // Update the selected quote to accepted
+      const selectedQuote = quotes.find(q => q.id === selectedQuoteId);
+      if (!selectedQuote) {
+        console.error('Selected quote not found:', selectedQuoteId);
+        throw new Error('Selected quote not found');
+      }
+      
+      console.log('Accepting quote:', selectedQuoteId, 'for job:', jobId, 'with cleaner:', selectedQuote.cleaner_id);
+      
+      // Direct update approach since stored procedure is not available
+      console.log('Fallback to direct update approach');
+      
+      // First update the job status to accepted and set the cleaner_id
+      const { error: jobError } = await supabase
+        .from('job_requests')
+        .update({ 
+          status: 'accepted',
+          cleaner_id: selectedQuote.cleaner_id
+        })
+        .eq('id', jobId);
+
+      if (jobError) {
+        console.error('Error updating job request:', jobError);
+        throw jobError;
+      }
+      
+      // Then update the selected quote to accepted
       const { error: quoteError } = await supabase
         .from('quotes')
         .update({ status: 'accepted' })
         .eq('id', selectedQuoteId);
 
-      if (quoteError) throw quoteError;
-
-      // Update the job status to accepted
-      const { error: jobError } = await supabase
-        .from('job_requests')
-        .update({ status: 'accepted' })
-        .eq('id', jobId);
-
-      if (jobError) throw jobError;
+      if (quoteError) {
+        console.error('Error updating quote status:', quoteError);
+        throw quoteError;
+      }
+      
+      // Reject all other quotes for this job
+      const { error: rejectError } = await supabase
+        .from('quotes')
+        .update({ status: 'rejected' })
+        .eq('job_request_id', jobId)
+        .neq('id', selectedQuoteId);
+      
+      if (rejectError) {
+        console.error('Error rejecting other quotes:', rejectError);
+        // Continue with the process even if rejecting other quotes fails
+      }
+      
+      console.log('Quote accepted successfully via direct update');
       
       // Close modal
       setShowAcceptModal(false);
@@ -162,67 +196,80 @@ export const QuoteCompare: React.FC<QuoteCompareProps> = ({
       )}
       
       <div className="quote-compare-grid">
-        {sortedQuotes.map((quote) => (
-          <div key={quote.id} className="quote-compare-card">
-            <div className="quote-compare-header">
-              <div className="quote-compare-amount">£{quote.amount}</div>
-              {quote.status === 'accepted' && (
-                <div className="quote-compare-status accepted">
-                  <CheckCircle className="h-4 w-4 mr-1" />
-                  Accepted
+        {sortedQuotes.map((quote) => {
+          // Check if any quote is accepted
+          const hasAcceptedQuote = sortedQuotes.some(q => q.status === 'accepted');
+          
+          // Hide rejected quotes if a quote has been accepted
+          if (hasAcceptedQuote && quote.status === 'rejected') {
+            return null;
+          }
+          
+          return (
+            <div 
+              key={quote.id} 
+              className={`quote-compare-card ${quote.status === 'accepted' ? 'quote-compare-accepted' : ''}`}
+            >
+              <div className="quote-compare-header">
+                <div className="quote-compare-amount">£{quote.amount}</div>
+                {quote.status === 'accepted' && (
+                  <div className="quote-compare-status accepted">
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    Accepted
+                  </div>
+                )}
+                {quote.status === 'rejected' && (
+                  <div className="quote-compare-status rejected">
+                    <XCircle className="h-4 w-4 mr-1" />
+                    Declined
+                  </div>
+                )}
+              </div>
+              
+              <div className="quote-compare-cleaner">
+                <span>{quote.cleaner.business_name}</span>
+                <Button
+                  size="sm"
+                  variant="link"
+                  className="view-profile-link"
+                  onClick={() => navigate(`/dashboard/cleaners/${quote.cleaner.id}`)}
+                >
+                  <User className="h-3 w-3 mr-1" />
+                  View Profile
+                </Button>
+              </div>
+              
+              {quote.message && (
+                <div className="quote-compare-message">
+                  <div className="quote-compare-message-label">Message:</div>
+                  <p>{quote.message}</p>
                 </div>
               )}
-              {quote.status === 'rejected' && (
-                <div className="quote-compare-status rejected">
-                  <XCircle className="h-4 w-4 mr-1" />
-                  Declined
+              
+              {quote.status !== 'accepted' && quote.status !== 'rejected' && !hasAcceptedQuote && (
+                <div className="quote-compare-actions">
+                  <Button
+                    size="sm"
+                    className="quote-compare-accept"
+                    onClick={() => handleAcceptQuote(quote.id)}
+                    isLoading={actionLoading === quote.id}
+                  >
+                    Accept
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="quote-compare-decline"
+                    onClick={() => handleDeclineQuote(quote.id)}
+                    isLoading={actionLoading === quote.id}
+                  >
+                    Decline
+                  </Button>
                 </div>
               )}
             </div>
-            
-            <div className="quote-compare-cleaner">
-              <span>{quote.cleaner.business_name}</span>
-              <Button
-                size="sm"
-                variant="link"
-                className="view-profile-link"
-                onClick={() => navigate(`/dashboard/cleaners/${quote.cleaner.id}`)}
-              >
-                <User className="h-3 w-3 mr-1" />
-                View Profile
-              </Button>
-            </div>
-            
-            {quote.message && (
-              <div className="quote-compare-message">
-                <div className="quote-compare-message-label">Message:</div>
-                <p>{quote.message}</p>
-              </div>
-            )}
-            
-            {quote.status !== 'accepted' && quote.status !== 'rejected' && (
-              <div className="quote-compare-actions">
-                <Button
-                  size="sm"
-                  className="quote-compare-accept"
-                  onClick={() => handleAcceptQuote(quote.id)}
-                  isLoading={actionLoading === quote.id}
-                >
-                  Accept
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="quote-compare-decline"
-                  onClick={() => handleDeclineQuote(quote.id)}
-                  isLoading={actionLoading === quote.id}
-                >
-                  Decline
-                </Button>
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

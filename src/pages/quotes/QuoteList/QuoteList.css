@@ -155,6 +155,13 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+.accepted-quote {
+  box-shadow: 0 0 0 2px #059669;
+  border-color: #059669;
+  position: relative;
+  z-index: 1;
+}
+
 .quote-header {
   display: flex;
   justify-content: space-between;

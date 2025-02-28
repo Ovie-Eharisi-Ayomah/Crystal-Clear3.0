@@ -29,6 +29,13 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
+.quote-compare-accepted {
+  box-shadow: 0 0 0 2px #059669;
+  border-color: #059669;
+  position: relative;
+  z-index: 1;
+}
+
 .quote-compare-header {
   display: flex;
   justify-content: space-between;
