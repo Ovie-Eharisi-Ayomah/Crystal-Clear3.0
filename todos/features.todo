@@ -4,19 +4,22 @@ Cleaner Job Features:
   ✔ Cleaners can click a submit quote button to submit a quote for a job @started(25-02-27 13:39) @done(25-02-27 13:39) @lasted(27s)
   ✔ Cleaner sees a confirmation message when they try to submit a quote on a job @started(25-02-27 13:39) @done(25-02-27 14:04) @lasted(25m9s)
   ✔ Cleaner cannot quote on a job if they have already quoted on it @started(25-02-27 14:04) @done(25-02-27 14:04) @lasted(26s)
-  - Cleaner can withdraw a quote before it is accepted by the owner
-  - Cleaners can see all jobs they have quoted on
-  - Cleaners can see all jobs they have accepted
-  - Cleaners can see all jobs they have completed
-  - Cleaners can see all jobs they have cancelled
+  ✔ Cleaner can withdraw a quote before it is accepted by the owner @started(25-02-27 16:17) @done(25-02-27 16:39) @lasted(22m19s)
+  - Cleaners can add a bio to their profile
+  - Cleaners can see all jobs they have quoted on in a separate section
+  - Cleaners can see all jobs that have been accepted in a separate section
+  - Cleaners can see all jobs they have completed in a separate section
+  - Cleaners can see all jobs they have cancelled in a separate section
   - Cleaners can review owners after jobs are completed
   - Cleaners can see all jobs they have received payments for
 
 Owner Job Features:
   ✔ Owners can only see their own properties @done(25-02-27 12:59)
   ✔ Owners can see all new job requests they have made @done(25-02-27 15:29)
-  - Owners can see all quotes they have received for their job requests @started(25-02-27 15:29)
-  - Owners can accept a quote for a job
+  ✔ Owners can see all quotes they have received for their job requests @started(25-02-27 15:29) @done(25-02-27 16:16) @lasted(47m23s)
+  ✔ Owners can see the cleaner's name and quote amount for each quote @started(25-02-28 08:38) @done(25-02-28 08:45) @lasted(7m17s)
+  ✔ Owners can access the cleaner's profile from the quote @started(25-02-28 08:45) @done(25-02-28 08:56) @lasted(11m17s)
+  - Owners can accept a quote for a job @started(25-02-28 08:56)
   - Owners can reject a quote for a job
   - Owners can see all jobs they have accepted
   - Owners can see all jobs that have been completed

@@ -66,6 +66,17 @@
   font-weight: 500;
   color: #4b5563;
   margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.view-profile-link {
+  color: #3b82f6 !important;
+  font-size: 0.75rem;
+  padding: 0 !important;
+  height: auto !important;
+  font-weight: normal;
 }
 
 .quote-compare-message {

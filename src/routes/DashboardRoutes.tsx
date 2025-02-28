@@ -12,6 +12,7 @@ import { SessionManagement } from '@/pages/auth/SessionManagement';
 import { Settings } from '@/pages/settings/Settings';
 import { QuoteList } from '@/pages/quotes/QuoteList';
 import { QuoteDetail } from '@/pages/quotes/QuoteDetail';
+import { CleanerProfile } from '@/pages/cleaners/CleanerProfile/CleanerProfile';
 
 export function DashboardRoutes() {
   return (
@@ -27,6 +28,7 @@ export function DashboardRoutes() {
         <Route path="/jobs/:jobId" element={<JobDetails />} />
         <Route path="/quotes" element={<QuoteList />} />
         <Route path="/quotes/:quoteId" element={<QuoteDetail />} />
+        <Route path="/cleaners/:cleanerId" element={<CleanerProfile />} />
         <Route path="/sessions" element={<SessionManagement />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<div>Coming soon...</div>} />

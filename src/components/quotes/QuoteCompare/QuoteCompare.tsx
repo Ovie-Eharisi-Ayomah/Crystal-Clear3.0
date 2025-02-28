@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useNavigate } from 'react-router-dom';
 import './QuoteCompare.css';
 
 interface Quote {
@@ -30,6 +31,7 @@ export const QuoteCompare: React.FC<QuoteCompareProps> = ({
   onQuoteAccepted,
   jobId
 }) => {
+  const navigate = useNavigate();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -135,7 +137,16 @@ export const QuoteCompare: React.FC<QuoteCompareProps> = ({
             </div>
             
             <div className="quote-compare-cleaner">
-              {quote.cleaner.business_name}
+              <span>{quote.cleaner.business_name}</span>
+              <Button
+                size="sm"
+                variant="link"
+                className="view-profile-link"
+                onClick={() => navigate(`/dashboard/cleaners/${quote.cleaner.id}`)}
+              >
+                <User className="h-3 w-3 mr-1" />
+                View Profile
+              </Button>
             </div>
             
             {quote.message && (

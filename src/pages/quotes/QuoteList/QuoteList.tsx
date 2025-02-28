@@ -226,7 +226,18 @@ export function QuoteList() {
                     </div>
 
                     <div className="quote-cleaner">
-                      From: {quote.cleaner.business_name}
+                      <span>From: {quote.cleaner.business_name}</span>
+                      <Button 
+                        size="sm" 
+                        variant="link"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/dashboard/cleaners/${quote.cleaner.id}`);
+                        }}
+                        className="view-profile-link"
+                      >
+                        View Profile
+                      </Button>
                     </div>
                     
                     {quote.message && (

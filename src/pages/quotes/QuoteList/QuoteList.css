@@ -202,6 +202,17 @@
   font-size: 14px;
   color: #4b5563;
   margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.view-profile-link {
+  color: #3b82f6 !important;
+  font-size: 0.75rem;
+  padding: 0;
+  height: auto;
+  text-decoration: none;
 }
 
 .quote-message {

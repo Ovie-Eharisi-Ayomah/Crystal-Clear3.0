@@ -316,6 +316,14 @@ export function QuoteDetail() {
               </div>
             </div>
           )}
+          
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/dashboard/cleaners/${quote.cleaner_id}`)}
+            className="view-profile-button mt-4"
+          >
+            View Cleaner Profile
+          </Button>
         </div>
 
         {/* Job information */}
