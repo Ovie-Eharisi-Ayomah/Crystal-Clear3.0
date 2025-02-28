@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { format } from 'date-fns';
 import { 
   CheckCircle,
@@ -59,6 +60,12 @@ export function QuoteList() {
   const navigate = useNavigate();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  
+  // Modal states
+  const [showAcceptModal, setShowAcceptModal] = useState(false);
+  const [showDeclineModal, setShowDeclineModal] = useState(false);
+  const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
+  const [selectedQuoteJobId, setSelectedQuoteJobId] = useState<string | null>(null);
 
   // Only display jobs that have quotes for homeowners
   const jobsWithQuotes = jobs?.filter(job => 
@@ -84,18 +91,27 @@ export function QuoteList() {
     }
   };
 
-  const handleAcceptQuote = async (jobId: string, quoteId: string) => {
-    if (!window.confirm('Are you sure you want to accept this quote?')) {
-      return;
-    }
+  const handleAcceptQuote = (jobId: string, quoteId: string) => {
+    setSelectedQuoteId(quoteId);
+    setSelectedQuoteJobId(jobId);
+    setShowAcceptModal(true);
+  };
 
-    setActionLoading(quoteId);
+  const handleDeclineQuote = (quoteId: string) => {
+    setSelectedQuoteId(quoteId);
+    setShowDeclineModal(true);
+  };
+  
+  const confirmAcceptQuote = async () => {
+    if (!selectedQuoteId || !selectedQuoteJobId) return;
+    
+    setActionLoading(selectedQuoteId);
     try {
       // Update the selected quote to accepted
       const { error: quoteError } = await supabase
         .from('quotes')
         .update({ status: 'accepted' })
-        .eq('id', quoteId);
+        .eq('id', selectedQuoteId);
 
       if (quoteError) throw quoteError;
 
@@ -103,11 +119,12 @@ export function QuoteList() {
       const { error: jobError } = await supabase
         .from('job_requests')
         .update({ status: 'accepted' })
-        .eq('id', jobId);
+        .eq('id', selectedQuoteJobId);
 
       if (jobError) throw jobError;
 
-      // Refresh the page
+      // Close the modal and refresh
+      setShowAcceptModal(false);
       window.location.reload();
     } catch (err) {
       console.error('Error accepting quote:', err);
@@ -117,22 +134,21 @@ export function QuoteList() {
     }
   };
 
-  const handleDeclineQuote = async (quoteId: string) => {
-    if (!window.confirm('Are you sure you want to decline this quote?')) {
-      return;
-    }
-
-    setActionLoading(quoteId);
+  const confirmDeclineQuote = async () => {
+    if (!selectedQuoteId) return;
+    
+    setActionLoading(selectedQuoteId);
     try {
       // Update the quote status to rejected
       const { error: quoteError } = await supabase
         .from('quotes')
         .update({ status: 'rejected' })
-        .eq('id', quoteId);
+        .eq('id', selectedQuoteId);
 
       if (quoteError) throw quoteError;
 
-      // Refresh the page
+      // Close the modal and refresh
+      setShowDeclineModal(false);
       window.location.reload();
     } catch (err) {
       console.error('Error declining quote:', err);
@@ -162,6 +178,32 @@ export function QuoteList() {
 
   return (
     <div className="quotes-list-container">
+      {/* Accept Quote Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showAcceptModal}
+        onClose={() => setShowAcceptModal(false)}
+        onConfirm={confirmAcceptQuote}
+        title="Accept Quote"
+        message="Are you sure you want to accept this quote? Once accepted, all other quotes for this job will be automatically declined."
+        type="success"
+        confirmText="Yes, Accept Quote"
+        cancelText="Cancel"
+        isLoading={actionLoading === selectedQuoteId}
+      />
+      
+      {/* Decline Quote Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeclineModal}
+        onClose={() => setShowDeclineModal(false)}
+        onConfirm={confirmDeclineQuote}
+        title="Decline Quote"
+        message="Are you sure you want to decline this quote? This action cannot be undone."
+        type="warning"
+        confirmText="Yes, Decline Quote"
+        cancelText="Cancel"
+        isLoading={actionLoading === selectedQuoteId}
+      />
+      
       <div className="quotes-list-header">
         <Button 
           variant="ghost" 

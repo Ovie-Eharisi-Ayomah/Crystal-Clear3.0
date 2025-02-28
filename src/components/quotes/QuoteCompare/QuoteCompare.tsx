@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import './QuoteCompare.css';
 
 interface Quote {
@@ -34,16 +35,24 @@ export const QuoteCompare: React.FC<QuoteCompareProps> = ({
   const navigate = useNavigate();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // Modal states
+  const [showAcceptModal, setShowAcceptModal] = useState(false);
+  const [showDeclineModal, setShowDeclineModal] = useState(false);
+  const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
 
   // Sort quotes by amount (lowest first)
   const sortedQuotes = [...quotes].sort((a, b) => a.amount - b.amount);
 
-  const handleAcceptQuote = async (quoteId: string) => {
-    if (!window.confirm('Are you sure you want to accept this quote?')) {
-      return;
-    }
-
-    setActionLoading(quoteId);
+  const handleAcceptQuote = (quoteId: string) => {
+    setSelectedQuoteId(quoteId);
+    setShowAcceptModal(true);
+  };
+  
+  const confirmAcceptQuote = async () => {
+    if (!selectedQuoteId) return;
+    
+    setActionLoading(selectedQuoteId);
     setError(null);
     
     try {
@@ -51,7 +60,7 @@ export const QuoteCompare: React.FC<QuoteCompareProps> = ({
       const { error: quoteError } = await supabase
         .from('quotes')
         .update({ status: 'accepted' })
-        .eq('id', quoteId);
+        .eq('id', selectedQuoteId);
 
       if (quoteError) throw quoteError;
 
@@ -62,6 +71,9 @@ export const QuoteCompare: React.FC<QuoteCompareProps> = ({
         .eq('id', jobId);
 
       if (jobError) throw jobError;
+      
+      // Close modal
+      setShowAcceptModal(false);
 
       onQuoteAccepted();
     } catch (err) {
@@ -72,12 +84,15 @@ export const QuoteCompare: React.FC<QuoteCompareProps> = ({
     }
   };
 
-  const handleDeclineQuote = async (quoteId: string) => {
-    if (!window.confirm('Are you sure you want to decline this quote?')) {
-      return;
-    }
-
-    setActionLoading(quoteId);
+  const handleDeclineQuote = (quoteId: string) => {
+    setSelectedQuoteId(quoteId);
+    setShowDeclineModal(true);
+  };
+  
+  const confirmDeclineQuote = async () => {
+    if (!selectedQuoteId) return;
+    
+    setActionLoading(selectedQuoteId);
     setError(null);
     
     try {
@@ -85,9 +100,12 @@ export const QuoteCompare: React.FC<QuoteCompareProps> = ({
       const { error: quoteError } = await supabase
         .from('quotes')
         .update({ status: 'rejected' })
-        .eq('id', quoteId);
+        .eq('id', selectedQuoteId);
 
       if (quoteError) throw quoteError;
+      
+      // Close modal
+      setShowDeclineModal(false);
 
       // Force a refresh of the quotes
       onQuoteAccepted();
@@ -109,6 +127,32 @@ export const QuoteCompare: React.FC<QuoteCompareProps> = ({
 
   return (
     <div className="quote-compare-container">
+      {/* Accept Quote Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showAcceptModal}
+        onClose={() => setShowAcceptModal(false)}
+        onConfirm={confirmAcceptQuote}
+        title="Accept Quote"
+        message="Are you sure you want to accept this quote? Once accepted, all other quotes for this job will be automatically declined."
+        type="success"
+        confirmText="Yes, Accept Quote"
+        cancelText="Cancel"
+        isLoading={actionLoading === selectedQuoteId}
+      />
+      
+      {/* Decline Quote Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeclineModal}
+        onClose={() => setShowDeclineModal(false)}
+        onConfirm={confirmDeclineQuote}
+        title="Decline Quote"
+        message="Are you sure you want to decline this quote? This action cannot be undone."
+        type="warning"
+        confirmText="Yes, Decline Quote"
+        cancelText="Cancel"
+        isLoading={actionLoading === selectedQuoteId}
+      />
+      
       <h3 className="quote-compare-title">Compare Quotes ({quotes.length})</h3>
       
       {error && (

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { 
   ArrowLeft, 
   CheckCircle, 
@@ -57,6 +58,10 @@ export function QuoteDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  
+  // Modal states
+  const [showAcceptModal, setShowAcceptModal] = useState(false);
+  const [showDeclineModal, setShowDeclineModal] = useState(false);
 
   useEffect(() => {
     const fetchQuoteDetails = async () => {
@@ -108,10 +113,16 @@ export function QuoteDetail() {
 
   const handleAcceptQuote = async () => {
     if (!quote) return;
-    
-    if (!window.confirm('Are you sure you want to accept this quote?')) {
-      return;
-    }
+    setShowAcceptModal(true);
+  };
+
+  const handleDeclineQuote = async () => {
+    if (!quote) return;
+    setShowDeclineModal(true);
+  };
+  
+  const confirmAcceptQuote = async () => {
+    if (!quote) return;
 
     setActionLoading(true);
     try {
@@ -140,6 +151,9 @@ export function QuoteDetail() {
           status: 'accepted'
         }
       });
+      
+      // Close the modal
+      setShowAcceptModal(false);
     } catch (err) {
       console.error('Error accepting quote:', err);
       setError('Failed to accept quote. Please try again.');
@@ -148,12 +162,8 @@ export function QuoteDetail() {
     }
   };
 
-  const handleDeclineQuote = async () => {
+  const confirmDeclineQuote = async () => {
     if (!quote) return;
-    
-    if (!window.confirm('Are you sure you want to decline this quote?')) {
-      return;
-    }
 
     setActionLoading(true);
     try {
@@ -170,6 +180,9 @@ export function QuoteDetail() {
         ...quote,
         status: 'rejected'
       });
+      
+      // Close the modal
+      setShowDeclineModal(false);
     } catch (err) {
       console.error('Error declining quote:', err);
       setError('Failed to decline quote. Please try again.');
@@ -198,6 +211,32 @@ export function QuoteDetail() {
 
   return (
     <div className="quote-detail-container">
+      {/* Accept Quote Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showAcceptModal}
+        onClose={() => setShowAcceptModal(false)}
+        onConfirm={confirmAcceptQuote}
+        title="Accept Quote"
+        message="Are you sure you want to accept this quote? Once accepted, all other quotes for this job will be automatically declined."
+        type="success"
+        confirmText="Yes, Accept Quote"
+        cancelText="Cancel"
+        isLoading={actionLoading}
+      />
+      
+      {/* Decline Quote Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeclineModal}
+        onClose={() => setShowDeclineModal(false)}
+        onConfirm={confirmDeclineQuote}
+        title="Decline Quote"
+        message="Are you sure you want to decline this quote? This action cannot be undone."
+        type="warning"
+        confirmText="Yes, Decline Quote"
+        cancelText="Cancel"
+        isLoading={actionLoading}
+      />
+      
       <div className="quote-detail-header">
         <Button
           variant="ghost"
