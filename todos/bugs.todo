@@ -1,5 +1,20 @@
 Cleaner bugs:
-- Cleaners cannot view job details
+  - Cleaners cannot view job details
 
 Homeowner bugs:
-- Owners see all requests instead of just their own
+  - [FIXED - TEMPORARY] Owners cannot see any properties 
+  - [FIXED - TEMPORARY] Owners cannot see any requests
+  - [FIXED - TEMPORARY] Owners see all requests instead of just their own
+
+Critical security issues:
+  - RLS (Row Level Security) policies were temporarily disabled on job_requests and quotes tables
+  - This means no access control at the database level - any authenticated user can see all records
+  - Need to rebuild proper RLS policies that don't cause infinite recursion
+  - Current temporary fix allows the app to work but with compromised security
+
+To fix RLS recursion:
+  - Keep the modified useJobs.ts that fetches data in separate queries
+  - Create non-recursive RLS policies that use direct ID comparisons
+  - Avoid complex nested EXISTS queries in RLS policies
+  - Apply policies one by one to identify which ones cause recursion
+  - Test each policy with specific queries to ensure proper access control

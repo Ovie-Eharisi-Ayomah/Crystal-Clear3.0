@@ -69,76 +69,22 @@ export function useJobs() {
 
       try {
         console.log('Loading jobs for user type:', user.user_metadata?.user_type);
+        // Simplified query to avoid potential recursion in RLS policy
         let query = supabase
           .from('job_requests')
           .select(`
-            *,
-            property:properties (
-              id,
-              address_line1,
-              address_line2,
-              city,
-              postcode,
-              property_type,
-              num_floors,
-              num_windows,
-              window_types,
-              images:property_images (
-                id,
-                image_url,
-                image_type
-              )
-            ),
-            owner:profiles!job_requests_owner_id_fkey (
-              id,
-              full_name,
-              email,
-              phone
-            ),
-            quotes (
-              id,
-              amount,
-              message,
-              status,
-              cleaner:profiles!quotes_cleaner_id_fkey (
-                id,
-                business_name
-              )
-            )
+            *
           `)
           .order('created_at', { ascending: false });
 
-        // For debugging - get ALL jobs regardless of user role
-        console.log('DEBUG MODE: Getting all jobs without filtering');
-        
-        // First, make an unfiltered query to see if ANY jobs exist
-        const { data: allJobs, error: allJobsError } = await supabase
-          .from('job_requests')
-          .select('id, status, owner_id, property_id');
-          
-        console.log('All jobs in database (unfiltered):', allJobs);
-        
-        if (allJobsError) {
-          console.error('Error getting all jobs:', allJobsError);
-        }
-        
-        // Normal filtering logic (temporarily disabled for debugging)
-        /*
+        // Apply the appropriate filters based on user role
         if (user.user_metadata?.user_type === 'cleaner') {
           console.log('User is a cleaner:', user.id);
-          query = query.or('status.eq.new');
-          
-          if (user.id) {
-            console.log('Adding cleaner_id condition for:', user.id);
-            query = query.or('cleaner_id.eq.' + user.id);
-          }
+          query = query.or('status.eq.new,cleaner_id.eq.' + user.id);
         } else {
           console.log('User is a homeowner:', user.id);
           query = query.eq('owner_id', user.id);
         }
-        */
-
-        // For debugging - don't apply any filters to the main query either
         const { data, error: queryError } = await query;
 
         // Log the query results for debugging
@@ -151,18 +97,114 @@ export function useJobs() {
         if (queryError) throw queryError;
         
         if (isMounted) {
-          // Use all jobs regardless of whether property data is available
+          // Get basic job data first, then load related data separately
           const allJobs = data || [];
           console.log('All jobs from database:', allJobs.length);
           
-          // Log the details of each job to debug missing property data
-          allJobs.forEach(job => {
-            console.log(`Job ${job.id}: status=${job.status}, has property=${!!job.property}, has owner=${!!job.owner}`);
+          // For each job, fetch property and owner data separately to avoid RLS recursion
+          const jobsWithDetails = await Promise.all(allJobs.map(async (job) => {
+            console.log(`Loading details for job ${job.id}`);
             
-            // If property or owner is missing, add placeholders so the UI can still render
-            if (!job.property) {
+            // First fetch property data
+            let property = null;
+            try {
+              const { data: propertyData } = await supabase
+                .from('properties')
+                .select(`
+                  id,
+                  address_line1,
+                  address_line2,
+                  city,
+                  postcode,
+                  property_type,
+                  num_floors,
+                  num_windows,
+                  window_types
+                `)
+                .eq('id', job.property_id)
+                .single();
+                
+              if (propertyData) {
+                property = propertyData;
+                
+                // Now fetch images for the property
+                const { data: imageData } = await supabase
+                  .from('property_images')
+                  .select('id, image_url, image_type')
+                  .eq('property_id', job.property_id);
+                  
+                if (imageData && imageData.length > 0) {
+                  property.images = imageData;
+                }
+              }
+            } catch (err) {
+              console.warn(`Could not load property for job ${job.id}:`, err);
+            }
+            
+            // Fetch owner data
+            let owner = null;
+            try {
+              const { data: ownerData } = await supabase
+                .from('profiles')
+                .select('id, full_name, email, phone')
+                .eq('id', job.owner_id)
+                .single();
+                
+              if (ownerData) {
+                owner = ownerData;
+              }
+            } catch (err) {
+              console.warn(`Could not load owner for job ${job.id}:`, err);
+            }
+            
+            // Fetch quotes
+            let quotes = [];
+            try {
+              const { data: quotesData } = await supabase
+                .from('quotes')
+                .select(`
+                  id, 
+                  amount, 
+                  message, 
+                  status
+                `)
+                .eq('job_request_id', job.id);
+                
+              if (quotesData && quotesData.length > 0) {
+                // For each quote, fetch cleaner details
+                quotes = await Promise.all(quotesData.map(async (quote) => {
+                  let cleaner = null;
+                  try {
+                    const { data: cleanerData } = await supabase
+                      .from('profiles')
+                      .select('id, business_name')
+                      .eq('id', quote.cleaner_id)
+                      .single();
+                      
+                    if (cleanerData) {
+                      cleaner = cleanerData;
+                    }
+                  } catch (err) {
+                    console.warn(`Could not load cleaner for quote ${quote.id}:`, err);
+                  }
+                  
+                  return {
+                    ...quote,
+                    cleaner: cleaner || { 
+                      id: quote.cleaner_id || 'unknown',
+                      business_name: 'Business details unavailable'
+                    }
+                  };
+                }));
+              }
+            } catch (err) {
+              console.warn(`Could not load quotes for job ${job.id}:`, err);
+            }
+            
+            // If property or owner is missing, add placeholders
+            if (!property) {
               console.log(`Adding placeholder property data for job ${job.id}`);
-              job.property = {
+              property = {
                 id: job.property_id || 'unknown',
                 address_line1: 'Property details unavailable',
                 city: 'Unknown',
@@ -174,19 +216,26 @@ export function useJobs() {
               };
             }
             
-            if (!job.owner) {
+            if (!owner) {
               console.log(`Adding placeholder owner data for job ${job.id}`);
-              job.owner = {
+              owner = {
                 id: job.owner_id || 'unknown',
                 full_name: 'Owner details unavailable',
                 email: 'unavailable@example.com',
                 phone: 'unavailable'
               };
             }
-          });
+            
+            return {
+              ...job,
+              property,
+              owner,
+              quotes: quotes.length > 0 ? quotes : undefined
+            };
+          }));
           
-          // Set all jobs with placeholder data where needed
-          setJobs(allJobs);
+          // Set jobs with all details loaded
+          setJobs(jobsWithDetails);
           setError(null);
         }
       } catch (err) {
