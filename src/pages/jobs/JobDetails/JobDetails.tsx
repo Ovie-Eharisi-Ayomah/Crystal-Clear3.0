@@ -50,26 +50,42 @@ export function JobDetails() {
   const userType = user?.user_metadata?.user_type;
 
   // Check if the cleaner has already submitted a quote when component loads
+  // Only check for existing quote once when the component loads
   useEffect(() => {
+    let isMounted = true;
+    
     const checkForExistingQuote = async () => {
       if (user && jobId && userType === 'cleaner') {
-        const existingQuote = await checkExistingQuote(jobId);
-        
-        if (existingQuote) {
-          setQuoteSubmitted(true);
-          setQuoteAmount(existingQuote.amount.toString());
-          setQuoteMessage(existingQuote.message || '');
-        } else {
-          // Explicitly reset state if no quote exists
-          setQuoteSubmitted(false);
-          setQuoteAmount('');
-          setQuoteMessage('');
+        // Only perform the check if we're mounted and haven't already submitted a quote
+        if (!quoteSubmitted) {
+          const existingQuote = await checkExistingQuote(jobId);
+          
+          // Make sure we're still mounted before updating state
+          if (!isMounted) return;
+          
+          if (existingQuote) {
+            setQuoteSubmitted(true);
+            setQuoteAmount(existingQuote.amount.toString());
+            setQuoteMessage(existingQuote.message || '');
+          } else {
+            // Explicitly reset state if no quote exists
+            setQuoteSubmitted(false);
+            setQuoteAmount('');
+            setQuoteMessage('');
+          }
         }
       }
     };
 
     checkForExistingQuote();
-  }, [user, jobId, userType, checkExistingQuote]);
+    
+    // Cleanup function to prevent setting state on unmounted component
+    return () => {
+      isMounted = false;
+    };
+  // Only run this effect once when the component mounts or when user/jobId changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, jobId, userType]);
 
   if (isLoading) {
     return (

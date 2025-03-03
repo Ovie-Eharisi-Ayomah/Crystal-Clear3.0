@@ -23,25 +23,39 @@ export function useQuotes() {
   /**
    * Check if a cleaner has submitted a quote for a specific job
    */
+  // Keep a cache of checked quotes to avoid redundant API calls
+  const checkedQuotes = new Map<string, Quote | null>();
+
   const checkExistingQuote = async (jobId: string): Promise<Quote | null> => {
     if (!user || !jobId) return null;
     
+    // Check cache first to avoid unnecessary API calls
+    const cacheKey = `${jobId}_${user.id}`;
+    if (checkedQuotes.has(cacheKey)) {
+      return checkedQuotes.get(cacheKey) || null;
+    }
+    
     try {
+      console.log('Checking for existing quote for job:', jobId);
+      
+      // Use a different approach to avoid the 406 error
       const { data, error } = await supabase
         .from('quotes')
-        .select('*')
-        .eq('job_request_id', jobId)
-        .eq('cleaner_id', user.id)
-        .single();
+        .select('id, job_request_id, cleaner_id, amount, message, status, created_at')
+        .filter('job_request_id', 'eq', jobId)
+        .filter('cleaner_id', 'eq', user.id)
+        .limit(1)
+        .maybeSingle();
       
-      if (error) {
-        if (error.code === 'PGRST116') { // No rows returned
-          return null;
-        }
+      // Cache the result
+      const result = data as Quote || null;
+      checkedQuotes.set(cacheKey, result);
+      
+      if (error && error.code !== 'PGRST116') { // Ignore "no rows returned" error
         throw error;
       }
       
-      return data as Quote;
+      return result;
     } catch (err) {
       console.error('Error checking for existing quote:', err);
       setError(err instanceof Error ? err : new Error('Failed to check for existing quote'));
