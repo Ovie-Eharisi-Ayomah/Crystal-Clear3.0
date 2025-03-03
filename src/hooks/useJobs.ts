@@ -453,3 +453,116 @@ export function useCreateJobRequest() {
 
   return { createJobRequest, isLoading, error };
 }
+
+/**
+ * Hook to handle updating job status (complete or cancel)
+ */
+export function useUpdateJobStatus() {
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const completeJob = async (jobId: string) => {
+    if (!user) {
+      throw new Error('User must be authenticated to complete a job');
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      console.log(`Marking job ${jobId} as completed`);
+      
+      // First check if there's an accepted quote for this job from this cleaner
+      const { data: quote, error: quoteError } = await supabase
+        .from('quotes')
+        .select('id')
+        .eq('job_request_id', jobId)
+        .eq('cleaner_id', user.id)
+        .eq('status', 'accepted')
+        .single();
+
+      if (quoteError) throw quoteError;
+      
+      if (!quote) {
+        throw new Error('You do not have an accepted quote for this job');
+      }
+
+      // Update the job status to 'completed'
+      const { data, error: updateError } = await supabase
+        .from('job_requests')
+        .update({ status: 'completed' })
+        .eq('id', jobId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+      
+      console.log('Job marked as completed:', data);
+      return data;
+    } catch (err) {
+      console.error('Error completing job:', err);
+      setError(err instanceof Error ? err.message : 'Failed to complete job');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const cancelJob = async (jobId: string) => {
+    if (!user) {
+      throw new Error('User must be authenticated to cancel a job');
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      console.log(`Cancelling accepted job ${jobId}`);
+      
+      // First check if there's an accepted quote for this job from this cleaner
+      const { data: quote, error: quoteError } = await supabase
+        .from('quotes')
+        .select('id')
+        .eq('job_request_id', jobId)
+        .eq('cleaner_id', user.id)
+        .eq('status', 'accepted')
+        .single();
+
+      if (quoteError) throw quoteError;
+      
+      if (!quote) {
+        throw new Error('You do not have an accepted quote for this job');
+      }
+
+      // Update the job status back to 'new'
+      const { data, error: updateError } = await supabase
+        .from('job_requests')
+        .update({ status: 'new' })
+        .eq('id', jobId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+      
+      // Update the quote status back to 'pending'
+      const { error: quoteUpdateError } = await supabase
+        .from('quotes')
+        .update({ status: 'pending' })
+        .eq('id', quote.id);
+
+      if (quoteUpdateError) throw quoteUpdateError;
+      
+      console.log('Job cancelled and returned to new status:', data);
+      return data;
+    } catch (err) {
+      console.error('Error cancelling job:', err);
+      setError(err instanceof Error ? err.message : 'Failed to cancel job');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { completeJob, cancelJob, isLoading, error };
+}

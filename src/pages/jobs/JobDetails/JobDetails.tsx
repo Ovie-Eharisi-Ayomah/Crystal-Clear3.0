@@ -18,7 +18,8 @@ import {
   QuoteView,
   WithdrawConfirm,
   DeleteConfirmation,
-  ImageModal
+  ImageModal,
+  JobActions
 } from './components';
 
 // Import QuoteCompare component
@@ -248,61 +249,75 @@ export function JobDetails() {
 
           {/* Quote section for cleaners */}
           {userType === 'cleaner' && (
-            <div className="quote-section bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
-                {quoteSubmitted ? 'Quote Submitted' : 'Submit a Quote'}
-              </h2>
-              
-              {quoteSubmitted ? (
-                <>
-                  {showWithdrawConfirm ? (
-                    <WithdrawConfirm 
-                      onConfirm={handleWithdrawQuote}
-                      onCancel={() => setShowWithdrawConfirm(false)}
-                      isSubmitting={isSubmitting}
-                    />
-                  ) : (
-                    <QuoteView 
-                      amount={quoteAmount}
-                      message={quoteMessage}
-                      onWithdrawClick={() => setShowWithdrawConfirm(true)}
-                    />
-                  )}
-                </>
+            <>
+              {/* Show job actions for accepted jobs where the cleaner's quote was accepted */}
+              {job.status === 'accepted' && job.quotes && job.quotes.some(quote => 
+                quote.cleaner.id === user?.id && quote.status === 'accepted'
+              ) ? (
+                <JobActions 
+                  jobId={jobId!}
+                  ownerEmail={job.owner.email}
+                  ownerPhone={job.owner.phone}
+                  onStatusChange={() => window.location.reload()}
+                />
               ) : (
-                job.status === 'new' ? (
-                  <>
-                    {showQuoteConfirm ? (
-                      <QuoteConfirm 
-                        amount={quoteAmount}
-                        message={quoteMessage}
-                        onConfirm={confirmAndSubmitQuote}
-                        onCancel={() => setShowQuoteConfirm(false)}
-                        isSubmitting={isSubmitting}
-                      />
+                <div className="quote-section bg-white rounded-lg shadow p-6">
+                  <h2 className="text-lg font-medium text-gray-900 mb-4">
+                    {quoteSubmitted ? 'Quote Submitted' : 'Submit a Quote'}
+                  </h2>
+                  
+                  {quoteSubmitted ? (
+                    <>
+                      {showWithdrawConfirm ? (
+                        <WithdrawConfirm 
+                          onConfirm={handleWithdrawQuote}
+                          onCancel={() => setShowWithdrawConfirm(false)}
+                          isSubmitting={isSubmitting}
+                        />
+                      ) : (
+                        <QuoteView 
+                          amount={quoteAmount}
+                          message={quoteMessage}
+                          onWithdrawClick={() => setShowWithdrawConfirm(true)}
+                        />
+                      )}
+                    </>
+                  ) : (
+                    job.status === 'new' ? (
+                      <>
+                        {showQuoteConfirm ? (
+                          <QuoteConfirm 
+                            amount={quoteAmount}
+                            message={quoteMessage}
+                            onConfirm={confirmAndSubmitQuote}
+                            onCancel={() => setShowQuoteConfirm(false)}
+                            isSubmitting={isSubmitting}
+                          />
+                        ) : (
+                          <QuoteForm 
+                            jobId={jobId!}
+                            onQuoteSubmit={handleSubmitQuote}
+                            amount={quoteAmount}
+                            setAmount={setQuoteAmount}
+                            message={quoteMessage}
+                            setMessage={setQuoteMessage}
+                            submitError={submitError}
+                          />
+                        )}
+                      </>
                     ) : (
-                      <QuoteForm 
-                        jobId={jobId!}
-                        onQuoteSubmit={handleSubmitQuote}
-                        amount={quoteAmount}
-                        setAmount={setQuoteAmount}
-                        message={quoteMessage}
-                        setMessage={setQuoteMessage}
-                        submitError={submitError}
-                      />
-                    )}
-                  </>
-                ) : (
-                  <div className="text-center p-4 bg-gray-50 rounded-md">
-                    <p className="text-gray-600">
-                      {job.status === 'accepted' 
-                        ? 'This job has already been accepted by another cleaner.'
-                        : 'You cannot quote on this job at this time.'}
-                    </p>
-                  </div>
-                )
+                      <div className="text-center p-4 bg-gray-50 rounded-md">
+                        <p className="text-gray-600">
+                          {job.status === 'accepted' 
+                            ? 'This job has already been accepted by another cleaner.'
+                            : 'You cannot quote on this job at this time.'}
+                        </p>
+                      </div>
+                    )
+                  )}
+                </div>
               )}
-            </div>
+            </>
           )}
           
           {/* Quote comparison for homeowners */}

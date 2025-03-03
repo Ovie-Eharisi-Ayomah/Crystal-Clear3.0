@@ -4,10 +4,11 @@ Cleaner Job Features:
   ✔ Cleaners can click a submit quote button to submit a quote for a job @started(25-02-27 13:39) @done(25-02-27 13:39) @lasted(27s)
   ✔ Cleaner sees a confirmation message when they try to submit a quote on a job @started(25-02-27 13:39) @done(25-02-27 14:04) @lasted(25m9s)
   ✔ Cleaner cannot quote on a job if they have already quoted on it @started(25-02-27 14:04) @done(25-02-27 14:04) @lasted(26s)
-  ✔ Cleaner can withdraw a quote before it is accepted by the owner @started(25-02-27 16:17) @done(25-02-27 16:39) @lasted(22m19s)
-  - Cleaners see a contact owner button on the job details page when their quote is accepted
-  - Cleaners see a mark job as complete button on the job details page when their quote is accepted
-  - Cleaners see a cancel job button on the job details page when their quote is accepted
+  ✔ Cleaner can withdraw a quote before it is accepted by the owner @started(25-02-27 16:17) @done(25-03-03 16:24) @lasted(4d7m29s)
+  ✔ Cleaners see a contact owner button on the job details page when their quote is accepted @started(25-03-03 16:56) @done(25-03-03 17:04) @lasted(8m8s)
+  ✔ Cleaners see a mark job as complete button on the job details page when their quote is accepted @started(25-03-03 16:56) @done(25-03-03 17:04) @lasted(8m15s)
+  ✔ Cleaners see a cancel job button on the job details page when their quote is accepted @started(25-03-03 16:56) @done(25-03-03 17:04) @lasted(8m17s)
+  - Cleaners see a rejected label on the job details page when their quote is rejected
   - Cleaners can add a bio to their profile
   - Cleaners can see all jobs they have quoted on in a separate section
   - Cleaners can see all jobs that have been accepted in a separate section
@@ -25,7 +26,9 @@ Owner Job Features:
   ✔ Owners see a confirmation message when they click accept quote @started(25-02-28 09:02) @done(25-02-28 09:13) @lasted(11m55s)
   ✔ Owners can accept a quote for a job @started(25-02-28 09:20) @done(25-03-01 19:51) @lasted(1d10h31m56s)
   ✔ When a quote is accepted, all other quotes for the same job are automatically hidden @started(25-02-28 09:20) @done(25-03-01 19:51) @lasted(1d10h32m)
+  - Owners can delete a job request before it is accepted
   - Owners can reject a quote for a job
+  - Owners can edit a job request before it is accepted
   - Owners can see all jobs they have accepted
   - Owners can see all jobs that have been completed
   - Owners can see all jobs that have been cancelled
