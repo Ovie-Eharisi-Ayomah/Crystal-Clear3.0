@@ -101,101 +101,141 @@ export function useJobs() {
           const allJobs = data || [];
           console.log('All jobs from database:', allJobs.length);
           
-          // For each job, fetch property and owner data separately to avoid RLS recursion
-          const jobsWithDetails = await Promise.all(allJobs.map(async (job) => {
-            console.log(`Loading details for job ${job.id}`);
-            
-            // First fetch property data
-            let property = null;
-            try {
-              const { data: propertyData } = await supabase
-                .from('properties')
-                .select(`
-                  id,
-                  address_line1,
-                  address_line2,
-                  city,
-                  postcode,
-                  property_type,
-                  num_floors,
-                  num_windows,
-                  window_types
-                `)
-                .eq('id', job.property_id)
-                .single();
+          // For cleaner users, also fetch jobs they have quoted on
+        let extraJobIds = [];
+        if (user.user_metadata?.user_type === 'cleaner') {
+          try {
+            console.log('Fetching additional jobs that cleaner has quoted on');
+            const { data: cleanerQuotes } = await supabase
+              .from('quotes')
+              .select('job_request_id')
+              .eq('cleaner_id', user.id);
+              
+            if (cleanerQuotes && cleanerQuotes.length > 0) {
+              // Extract unique job request IDs
+              const quotedJobIds = cleanerQuotes.map(q => q.job_request_id);
+              console.log('Cleaner has quoted on jobs:', quotedJobIds);
+              
+              // Fetch those additional jobs
+              const { data: quotedJobs } = await supabase
+                .from('job_requests')
+                .select('*')
+                .in('id', quotedJobIds);
                 
-              if (propertyData) {
-                property = propertyData;
-                
-                // Now fetch images for the property
-                const { data: imageData } = await supabase
-                  .from('property_images')
-                  .select('id, image_url, image_type')
-                  .eq('property_id', job.property_id);
-                  
-                if (imageData && imageData.length > 0) {
-                  property.images = imageData;
-                }
-              }
-            } catch (err) {
-              console.warn(`Could not load property for job ${job.id}:`, err);
-            }
-            
-            // Fetch owner data
-            let owner = null;
-            try {
-              const { data: ownerData } = await supabase
-                .from('profiles')
-                .select('id, full_name, email, phone')
-                .eq('id', job.owner_id)
-                .single();
-                
-              if (ownerData) {
-                owner = ownerData;
-              }
-            } catch (err) {
-              console.warn(`Could not load owner for job ${job.id}:`, err);
-            }
-            
-            // Fetch quotes
-            let quotes = [];
-            try {
-              const { data: quotesData } = await supabase
-                .from('quotes')
-                .select(`
-                  id, 
-                  amount, 
-                  message, 
-                  status
-                `)
-                .eq('job_request_id', job.id);
-                
-              if (quotesData && quotesData.length > 0) {
-                // For each quote, fetch cleaner details
-                quotes = await Promise.all(quotesData.map(async (quote) => {
-                  let cleaner = null;
-                  try {
-                    const { data: cleanerData } = await supabase
-                      .from('profiles')
-                      .select('id, business_name')
-                      .eq('id', quote.cleaner_id)
-                      .single();
-                      
-                    if (cleanerData) {
-                      cleaner = cleanerData;
-                    }
-                  } catch (err) {
-                    console.warn(`Could not load cleaner for quote ${quote.id}:`, err);
+              if (quotedJobs && quotedJobs.length > 0) {
+                console.log('Found additional jobs from quotes:', quotedJobs.length);
+                // Add these jobs to our list if they're not already there
+                quotedJobs.forEach(job => {
+                  if (!allJobs.some(j => j.id === job.id)) {
+                    allJobs.push(job);
+                    extraJobIds.push(job.id);
                   }
-                  
-                  return {
-                    ...quote,
-                    cleaner: cleaner || { 
-                      id: quote.cleaner_id || 'unknown',
-                      business_name: 'Business details unavailable'
-                    }
-                  };
-                }));
+                });
+              }
+            }
+          } catch (err) {
+            console.warn('Error fetching cleaner quoted jobs:', err);
+          }
+        }
+        
+        console.log('Processing total jobs:', allJobs.length, 'including extra jobs:', extraJobIds.length);
+        
+        // For each job, fetch property and owner data separately to avoid RLS recursion
+        const jobsWithDetails = await Promise.all(allJobs.map(async (job) => {
+          console.log(`Loading details for job ${job.id}`);
+          
+          // First fetch property data
+          let property = null;
+          try {
+            const { data: propertyData } = await supabase
+              .from('properties')
+              .select(`
+                id,
+                address_line1,
+                address_line2,
+                city,
+                postcode,
+                property_type,
+                num_floors,
+                num_windows,
+                window_types
+              `)
+              .eq('id', job.property_id)
+              .single();
+              
+            if (propertyData) {
+              property = propertyData;
+              
+              // Now fetch images for the property
+              const { data: imageData } = await supabase
+                .from('property_images')
+                .select('id, image_url, image_type')
+                .eq('property_id', job.property_id);
+                
+              if (imageData && imageData.length > 0) {
+                property.images = imageData;
+              }
+            }
+          } catch (err) {
+            console.warn(`Could not load property for job ${job.id}:`, err);
+          }
+          
+          // Fetch owner data
+          let owner = null;
+          try {
+            const { data: ownerData } = await supabase
+              .from('profiles')
+              .select('id, full_name, email, phone')
+              .eq('id', job.owner_id)
+              .single();
+              
+            if (ownerData) {
+              owner = ownerData;
+            }
+          } catch (err) {
+            console.warn(`Could not load owner for job ${job.id}:`, err);
+          }
+          
+          // Fetch quotes
+          let quotes = [];
+          try {
+            const { data: quotesData } = await supabase
+              .from('quotes')
+              .select(`
+                id, 
+                amount, 
+                message, 
+                status,
+                cleaner_id
+              `)
+              .eq('job_request_id', job.id);
+              
+            if (quotesData && quotesData.length > 0) {
+              // For each quote, fetch cleaner details
+              quotes = await Promise.all(quotesData.map(async (quote) => {
+                let cleaner = null;
+                try {
+                  const { data: cleanerData } = await supabase
+                    .from('profiles')
+                    .select('id, business_name')
+                    .eq('id', quote.cleaner_id)
+                    .single();
+                    
+                  if (cleanerData) {
+                    cleaner = cleanerData;
+                  }
+                } catch (err) {
+                  console.warn(`Could not load cleaner for quote ${quote.id}:`, err);
+                }
+                
+                return {
+                  ...quote,
+                  cleaner: cleaner || { 
+                    id: quote.cleaner_id || 'unknown',
+                    business_name: 'Business details unavailable'
+                  }
+                };
+              }));
               }
             } catch (err) {
               console.warn(`Could not load quotes for job ${job.id}:`, err);
