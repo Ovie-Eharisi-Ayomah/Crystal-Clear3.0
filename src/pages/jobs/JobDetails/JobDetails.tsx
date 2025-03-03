@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useJob } from '@/hooks/useJobs';
+import { useQuotes } from '@/hooks/useQuotes';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -27,6 +28,13 @@ export function JobDetails() {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
   const { job, isLoading, error } = useJob(jobId!);
+  const { 
+    checkExistingQuote, 
+    submitQuote, 
+    withdrawQuote, 
+    isLoading: quoteLoading, 
+    error: quoteError 
+  } = useQuotes();
   const { user } = useAuth();
   const [quoteAmount, setQuoteAmount] = useState('');
   const [quoteMessage, setQuoteMessage] = useState('');
@@ -43,30 +51,16 @@ export function JobDetails() {
 
   // Check if the cleaner has already submitted a quote when component loads
   useEffect(() => {
-    const checkExistingQuote = async () => {
+    const checkForExistingQuote = async () => {
       if (user && jobId && userType === 'cleaner') {
-        try {
-          const { data, error } = await supabase
-            .from('quotes')
-            .select('amount, message')
-            .eq('job_request_id', jobId)
-            .eq('cleaner_id', user.id)
-            .single();
-          
-          if (data) {
-            setQuoteSubmitted(true);
-            setQuoteAmount(data.amount.toString());
-            setQuoteMessage(data.message || '');
-          } else {
-            // Explicitly reset state if no quote exists
-            setQuoteSubmitted(false);
-            setQuoteAmount('');
-            setQuoteMessage('');
-          }
-        } catch (err) {
-          // No quote exists, or error occurred
-          console.error('Error checking for existing quote:', err);
-          // Make sure to reset the state in case of an error (no quote found)
+        const existingQuote = await checkExistingQuote(jobId);
+        
+        if (existingQuote) {
+          setQuoteSubmitted(true);
+          setQuoteAmount(existingQuote.amount.toString());
+          setQuoteMessage(existingQuote.message || '');
+        } else {
+          // Explicitly reset state if no quote exists
           setQuoteSubmitted(false);
           setQuoteAmount('');
           setQuoteMessage('');
@@ -74,8 +68,8 @@ export function JobDetails() {
       }
     };
 
-    checkExistingQuote();
-  }, [user, jobId, userType]);
+    checkForExistingQuote();
+  }, [user, jobId, userType, checkExistingQuote]);
 
   if (isLoading) {
     return (
@@ -115,26 +109,14 @@ export function JobDetails() {
     setSubmitError(null);
 
     try {
-      const { error: quoteError } = await supabase
-        .from('quotes')
-        .insert({
-          job_request_id: jobId,
-          cleaner_id: user?.id,
-          amount: parseFloat(quoteAmount),
-          message: quoteMessage,
-        });
-
-      if (quoteError) throw quoteError;
-
-      const { error: statusError } = await supabase
-        .from('job_requests')
-        .update({ status: 'quoted' })
-        .eq('id', jobId);
-
-      if (statusError) throw statusError;
-
-      setQuoteSubmitted(true);
-      // Stay on the current page instead of navigating away
+      const quote = await submitQuote(jobId!, parseFloat(quoteAmount), quoteMessage);
+      
+      if (quote) {
+        setQuoteSubmitted(true);
+        // Stay on the current page instead of navigating away
+      } else {
+        throw new Error('Failed to submit quote');
+      }
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Failed to submit quote');
     } finally {
@@ -174,74 +156,21 @@ export function JobDetails() {
   const handleWithdrawQuote = async () => {
     setIsSubmitting(true);
     try {
-      console.log('Attempting to delete quote for job:', jobId, 'cleaner:', user?.id);
+      const success = await withdrawQuote(jobId!);
       
-      // First, get the quote ID
-      const { data: quoteData, error: findError } = await supabase
-        .from('quotes')
-        .select('id')
-        .eq('job_request_id', jobId)
-        .eq('cleaner_id', user?.id)
-        .single();
-      
-      if (findError) {
-        console.error('Error finding quote to delete:', findError);
-        throw findError;
-      }
-      
-      if (!quoteData || !quoteData.id) {
-        console.error('No quote found to delete');
-        throw new Error('No quote found to delete');
-      }
-      
-      console.log('Found quote to delete:', quoteData.id);
-      
-      // Delete the quote by ID
-      const { error: deleteError } = await supabase
-        .from('quotes')
-        .delete()
-        .eq('id', quoteData.id);
-      
-      if (deleteError) {
-        console.error('Error deleting quote:', deleteError);
-        throw deleteError;
-      }
-      
-      console.log('Quote successfully deleted');
-      
-      // Reset the job status to 'new' if no other quotes exist
-      const { data: otherQuotes, error: countError } = await supabase
-        .from('quotes')
-        .select('id')
-        .eq('job_request_id', jobId);
-      
-      if (countError) {
-        console.error('Error checking other quotes:', countError);
-      }
-      
-      console.log('Remaining quotes for job:', otherQuotes?.length || 0);
+      if (success) {
+        // Reset state
+        setQuoteSubmitted(false);
+        setQuoteAmount('');
+        setQuoteMessage('');
+        setShowWithdrawConfirm(false);
         
-      if (!otherQuotes || otherQuotes.length === 0) {
-        console.log('No other quotes exist, resetting job status to new');
-        const { error: updateError } = await supabase
-          .from('job_requests')
-          .update({ status: 'new' })
-          .eq('id', jobId);
-          
-        if (updateError) {
-          console.error('Error updating job status:', updateError);
-        }
+        // Show success message and reload the page after a brief delay
+        alert('Quote withdrawn successfully');
+        window.location.reload();
+      } else {
+        throw new Error('Failed to withdraw quote');
       }
-      
-      // Reset state
-      setQuoteSubmitted(false);
-      setQuoteAmount('');
-      setQuoteMessage('');
-      setShowWithdrawConfirm(false);
-      
-      // Show success message and reload the page after a brief delay
-      alert('Quote withdrawn successfully');
-      window.location.reload();
     } catch (err) {
       console.error('Failed to withdraw quote:', err);
       setSubmitError(err instanceof Error ? err.message : 'Failed to withdraw quote');
@@ -302,7 +231,7 @@ export function JobDetails() {
           <OwnerDetails owner={job.owner} />
 
           {/* Quote section for cleaners */}
-          {userType === 'cleaner' && job.status === 'new' && (
+          {userType === 'cleaner' && (
             <div className="quote-section bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 mb-4">
                 {quoteSubmitted ? 'Quote Submitted' : 'Submit a Quote'}
@@ -325,27 +254,37 @@ export function JobDetails() {
                   )}
                 </>
               ) : (
-                <>
-                  {showQuoteConfirm ? (
-                    <QuoteConfirm 
-                      amount={quoteAmount}
-                      message={quoteMessage}
-                      onConfirm={confirmAndSubmitQuote}
-                      onCancel={() => setShowQuoteConfirm(false)}
-                      isSubmitting={isSubmitting}
-                    />
-                  ) : (
-                    <QuoteForm 
-                      jobId={jobId!}
-                      onQuoteSubmit={handleSubmitQuote}
-                      amount={quoteAmount}
-                      setAmount={setQuoteAmount}
-                      message={quoteMessage}
-                      setMessage={setQuoteMessage}
-                      submitError={submitError}
-                    />
-                  )}
-                </>
+                job.status === 'new' ? (
+                  <>
+                    {showQuoteConfirm ? (
+                      <QuoteConfirm 
+                        amount={quoteAmount}
+                        message={quoteMessage}
+                        onConfirm={confirmAndSubmitQuote}
+                        onCancel={() => setShowQuoteConfirm(false)}
+                        isSubmitting={isSubmitting}
+                      />
+                    ) : (
+                      <QuoteForm 
+                        jobId={jobId!}
+                        onQuoteSubmit={handleSubmitQuote}
+                        amount={quoteAmount}
+                        setAmount={setQuoteAmount}
+                        message={quoteMessage}
+                        setMessage={setQuoteMessage}
+                        submitError={submitError}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center p-4 bg-gray-50 rounded-md">
+                    <p className="text-gray-600">
+                      {job.status === 'accepted' 
+                        ? 'This job has already been accepted by another cleaner.'
+                        : 'You cannot quote on this job at this time.'}
+                    </p>
+                  </div>
+                )
               )}
             </div>
           )}

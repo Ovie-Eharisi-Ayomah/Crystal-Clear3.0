@@ -1,7 +1,7 @@
 Cleaner bugs:
   - [FIXED] Cleaners cannot view job details
   - [FIXED] Cleaners cannot see jobs they have quoted on
-  - Cleaners cannot see "Withdraw Quote" button on quoted jobs
+  - [FIXED] Cleaners cannot see "Withdraw Quote" button on quoted jobs @started(25-03-03 16:24) @done(25-03-04 14:28) @lasted(22h4m)
   - Cleaners see a "Contact Owner" button on the job details page when their quote is accepted
   - Cleaners see a "Mark Job as Complete" button on the job details page when their quote is accepted
   - Cleaners see a "Cancel Job" button on the job details page when their quote is accepted
