@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useJob } from '@/hooks/useJobs';
 import { useQuotes } from '@/hooks/useQuotes';
 import { useReviews } from '@/hooks/useReviews';
+import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Trash2, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -21,7 +22,8 @@ import {
   WithdrawConfirm,
   DeleteConfirmation,
   ImageModal,
-  JobActions
+  JobActions,
+  JobActionsOwner
 } from './components';
 
 // Import QuoteCompare component
@@ -47,6 +49,7 @@ export function JobDetails() {
     isLoading: reviewLoading,
     error: reviewError
   } = useReviews();
+  const { getProfileById } = useProfile();
   const { user } = useAuth();
   const [quoteAmount, setQuoteAmount] = useState('');
   const [quoteMessage, setQuoteMessage] = useState('');
@@ -61,6 +64,7 @@ export function JobDetails() {
   const [hasSubmittedReview, setHasSubmittedReview] = useState(false);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const [cleanerProfile, setCleanerProfile] = useState<any>(null);
 
   const userType = user?.user_metadata?.user_type;
 
@@ -102,7 +106,7 @@ export function JobDetails() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, jobId, userType]);
   
-  // Check if the user has already submitted a review for this job
+  // Check if the user has already submitted a review for this job and load cleaner profile for accepted jobs
   useEffect(() => {
     let isMounted = true;
     
@@ -139,15 +143,27 @@ export function JobDetails() {
       }
     };
     
+    const loadCleanerProfile = async () => {
+      if (job?.status === 'accepted' && job.quotes && job.quotes.some(q => q.status === 'accepted')) {
+        const cleanerId = job.quotes.find(q => q.status === 'accepted')!.cleaner.id;
+        const profile = await getProfileById(cleanerId);
+        
+        if (!isMounted) return;
+        
+        setCleanerProfile(profile);
+      }
+    };
+    
     if (job) {
       checkForExistingReview();
       loadReviews();
+      loadCleanerProfile();
     }
     
     return () => {
       isMounted = false;
     };
-  }, [job, jobId, user, checkExistingReview, getUserReviews, userType]);
+  }, [job, jobId, user, checkExistingReview, getUserReviews, userType, getProfileById]);
 
   if (isLoading) {
     return (
@@ -382,18 +398,35 @@ export function JobDetails() {
             </>
           )}
           
-          {/* Quote comparison for homeowners */}
-          {userType === 'homeowner' && job.quotes && job.quotes.length > 0 && job.status === 'new' && (
-            <div className="quote-section bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
-                Quotes Received
-              </h2>
-              <QuoteCompare 
-                quotes={job.quotes} 
-                onQuoteAccepted={() => window.location.reload()}
-                jobId={jobId!}
-              />
-            </div>
+          {/* Homeowner sections */}
+          {userType === 'homeowner' && (
+            <>
+              {/* Job actions for accepted jobs */}
+              {job.status === 'accepted' && job.quotes && job.quotes.some(q => q.status === 'accepted') && (
+                <JobActionsOwner 
+                  jobId={jobId!}
+                  cleanerId={job.quotes.find(q => q.status === 'accepted')!.cleaner.id}
+                  cleanerName={job.quotes.find(q => q.status === 'accepted')!.cleaner.business_name}
+                  cleanerEmail={cleanerProfile?.email}
+                  cleanerPhone={cleanerProfile?.phone}
+                  onStatusChange={() => window.location.reload()}
+                />
+              )}
+              
+              {/* Quote comparison for new jobs */}
+              {job.quotes && job.quotes.length > 0 && job.status === 'new' && (
+                <div className="quote-section bg-white rounded-lg shadow p-6">
+                  <h2 className="text-lg font-medium text-gray-900 mb-4">
+                    Quotes Received
+                  </h2>
+                  <QuoteCompare 
+                    quotes={job.quotes} 
+                    onQuoteAccepted={() => window.location.reload()}
+                    jobId={jobId!}
+                  />
+                </div>
+              )}
+            </>
           )}
           
           {/* Review section for completed jobs */}
