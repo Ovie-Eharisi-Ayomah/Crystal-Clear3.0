@@ -8,13 +8,14 @@ Cleaner Job Features:
   ✔ Cleaners see a contact owner button on the job details page when their quote is accepted @started(25-03-03 16:56) @done(25-03-03 17:04) @lasted(8m8s)
   ✔ Cleaners see a mark job as complete button on the job details page when their quote is accepted @started(25-03-03 16:56) @done(25-03-03 17:04) @lasted(8m15s)
   ✔ Cleaners see a cancel job button on the job details page when their quote is accepted @started(25-03-03 16:56) @done(25-03-03 17:04) @lasted(8m17s)
+  ✔ Cleaners see awaiting review label on the job details page when the job is complete @started(25-03-03 20:20) @done(25-03-03 20:30) @lasted(10m)
   - Cleaners see a rejected label on the job details page when their quote is rejected
   - Cleaners can add a bio to their profile
   - Cleaners can see all jobs they have quoted on in a separate section
   - Cleaners can see all jobs that have been accepted in a separate section
   - Cleaners can see all jobs they have completed in a separate section
   - Cleaners can see all jobs they have cancelled in a separate section
-  - Cleaners can review owners after jobs are completed
+  ✔ Cleaners can review owners after jobs are completed @started(25-03-03 19:30) @done(25-03-03 20:15) @lasted(45m)
   - Cleaners can see all jobs they have received payments for
 
 Owner Job Features:
@@ -28,11 +29,12 @@ Owner Job Features:
   ✔ When a quote is accepted, all other quotes for the same job are automatically hidden @started(25-02-28 09:20) @done(25-03-01 19:51) @lasted(1d10h32m)
   - Owners can delete a job request before it is accepted
   - Owners can reject a quote for a job
-  - Owners can edit a job request before it is accepted
+  - Owners can edit a job request 
+  - Owners can cancel a booked job
   - Owners can see all jobs they have accepted
   - Owners can see all jobs that have been completed
   - Owners can see all jobs that have been cancelled
-  - Owners can review cleaners after jobs are completed
+  ✔ Owners can review cleaners after jobs are completed @started(25-03-03 19:30) @done(25-03-03 20:15) @lasted(45m)
 
 Message Features:
   - Cleaners can send messages to owners only on jobs they have accepted

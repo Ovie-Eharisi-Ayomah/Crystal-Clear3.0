@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useJob } from '@/hooks/useJobs';
 import { useQuotes } from '@/hooks/useQuotes';
+import { useReviews } from '@/hooks/useReviews';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';
 import './JobDetails.css';
 
 // Import all components
@@ -25,6 +27,9 @@ import {
 // Import QuoteCompare component
 import { QuoteCompare } from '@/components/quotes/QuoteCompare';
 
+// Import rating components
+import { ReviewForm, ReviewsList } from '@/components/ratings';
+
 export function JobDetails() {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
@@ -36,6 +41,12 @@ export function JobDetails() {
     isLoading: quoteLoading, 
     error: quoteError 
   } = useQuotes();
+  const {
+    checkExistingReview,
+    getUserReviews,
+    isLoading: reviewLoading,
+    error: reviewError
+  } = useReviews();
   const { user } = useAuth();
   const [quoteAmount, setQuoteAmount] = useState('');
   const [quoteMessage, setQuoteMessage] = useState('');
@@ -47,6 +58,9 @@ export function JobDetails() {
   const [quoteSubmitted, setQuoteSubmitted] = useState(false);
   const [showQuoteConfirm, setShowQuoteConfirm] = useState(false);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
+  const [hasSubmittedReview, setHasSubmittedReview] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
 
   const userType = user?.user_metadata?.user_type;
 
@@ -87,6 +101,53 @@ export function JobDetails() {
   // Only run this effect once when the component mounts or when user/jobId changes
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, jobId, userType]);
+  
+  // Check if the user has already submitted a review for this job
+  useEffect(() => {
+    let isMounted = true;
+    
+    const checkForExistingReview = async () => {
+      if (user && jobId && job?.status === 'completed') {
+        const existingReview = await checkExistingReview(jobId);
+        
+        if (!isMounted) return;
+        
+        setHasSubmittedReview(!!existingReview);
+      }
+    };
+    
+    const loadReviews = async () => {
+      if (jobId && job?.status === 'completed') {
+        setLoadingReviews(true);
+        
+        // Determine whose reviews to show
+        // For homeowners, show reviews of the cleaner
+        // For cleaners, show reviews of the homeowner
+        const revieweeId = userType === 'homeowner' ? 
+          job.quotes?.find(q => q.status === 'accepted')?.cleaner.id : 
+          job.owner_id;
+        
+        if (revieweeId) {
+          const reviewsData = await getUserReviews(revieweeId);
+          
+          if (!isMounted) return;
+          
+          setReviews(reviewsData);
+        }
+        
+        setLoadingReviews(false);
+      }
+    };
+    
+    if (job) {
+      checkForExistingReview();
+      loadReviews();
+    }
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [job, jobId, user, checkExistingReview, getUserReviews, userType]);
 
   if (isLoading) {
     return (
@@ -321,7 +382,7 @@ export function JobDetails() {
           )}
           
           {/* Quote comparison for homeowners */}
-          {userType === 'homeowner' && job.quotes && job.quotes.length > 0 && (
+          {userType === 'homeowner' && job.quotes && job.quotes.length > 0 && job.status === 'new' && (
             <div className="quote-section bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 mb-4">
                 Quotes Received
@@ -331,6 +392,118 @@ export function JobDetails() {
                 onQuoteAccepted={() => window.location.reload()}
                 jobId={jobId!}
               />
+            </div>
+          )}
+          
+          {/* Review section for completed jobs */}
+          {job.status === 'completed' && (
+            <div className="space-y-6">
+              {/* Homeowner review section */}
+              {userType === 'homeowner' && (
+                <>
+                  {/* Show "Waiting for review" message if review not submitted */}
+                  {!hasSubmittedReview && (
+                    <div className="bg-white rounded-lg shadow p-6">
+                      <div className="text-center py-3 bg-amber-50 rounded-md mb-4">
+                        <p className="text-amber-600 font-medium">
+                          Waiting for your review
+                        </p>
+                      </div>
+                      
+                      {job.quotes && job.quotes.some(q => q.status === 'accepted') && (
+                        <ReviewForm 
+                          jobId={jobId!}
+                          revieweeId={job.quotes.find(q => q.status === 'accepted')!.cleaner.id}
+                          revieweeType="cleaner"
+                          revieweeName={job.quotes.find(q => q.status === 'accepted')!.cleaner.business_name}
+                          onReviewSubmitted={() => window.location.reload()}
+                        />
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* If review submitted, show success message */}
+                  {hasSubmittedReview && (
+                    <div className="bg-white rounded-lg shadow p-6">
+                      <div className="text-center py-4 bg-green-50 rounded-md">
+                        <p className="text-green-600">
+                          Thank you for submitting your review.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+              
+              {/* Cleaner review section */}
+              {userType === 'cleaner' && (
+                <>
+                  {/* Show review form if not submitted */}
+                  {!hasSubmittedReview && 
+                   job.quotes && job.quotes.some(q => q.cleaner.id === user?.id && q.status === 'accepted') && (
+                    <div className="bg-white rounded-lg shadow p-6">
+                      <div className="text-center py-3 bg-amber-50 rounded-md mb-4">
+                        <p className="text-amber-600 font-medium">
+                          Waiting for your review
+                        </p>
+                      </div>
+                      
+                      <ReviewForm 
+                        jobId={jobId!}
+                        revieweeId={job.owner.id}
+                        revieweeType="homeowner"
+                        revieweeName={job.owner.full_name}
+                        onReviewSubmitted={() => window.location.reload()}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* If review submitted, show success message */}
+                  {hasSubmittedReview && (
+                    <div className="bg-white rounded-lg shadow p-6">
+                      <div className="text-center py-4 bg-green-50 rounded-md">
+                        <p className="text-green-600">
+                          Thank you for submitting your review.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+              
+              {/* Display reviews - but only show comments, not ratings */}
+              {reviews.length > 0 && (
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-lg font-medium text-gray-900 mb-4">
+                    {userType === 'homeowner' ? "Cleaner Feedback" : "Homeowner Feedback"}
+                  </h2>
+                  <div className="space-y-4">
+                    {reviews.map((review) => (
+                      <div key={review.id} className="bg-white p-4 rounded-md border border-gray-200">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center">
+                            <div className="bg-gray-100 rounded-full p-2 mr-3">
+                              <User className="h-5 w-5 text-gray-500" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{review.reviewer_type === 'homeowner' ? 'Homeowner' : 'Cleaner'}</p>
+                              <p className="text-sm text-gray-500">
+                                {format(new Date(review.created_at), 'PPP')}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {review.comment ? (
+                          <p className="mt-3 text-gray-700">{review.comment}</p>
+                        ) : (
+                          <p className="mt-3 text-gray-500 italic">No written feedback provided.</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
