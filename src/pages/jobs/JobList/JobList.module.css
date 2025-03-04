@@ -187,3 +187,28 @@
 .errorState {
   @apply text-center py-8 text-red-600;
 }
+
+/* Tab Navigation Styles */
+.tabsContainer {
+  @apply w-full mb-8;
+}
+
+.tabsList {
+  @apply grid grid-cols-5 gap-2 w-full mb-6;
+}
+
+.tabTrigger {
+  @apply px-3 py-2 rounded-md font-medium text-center transition-all cursor-pointer bg-gray-100 text-gray-600 hover:bg-gray-200;
+}
+
+.tabTrigger[data-state="active"] {
+  @apply bg-blue-600 text-white;
+}
+
+.tabBadge {
+  @apply ml-1 px-2 py-0.5 text-xs rounded-full bg-white/20 font-semibold;
+}
+
+.tabTrigger[data-state="active"] .tabBadge {
+  @apply bg-white/20 text-white;
+}

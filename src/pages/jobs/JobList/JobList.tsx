@@ -23,6 +23,7 @@ import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import styles from './JobList.module.css';
 import { createTestJob } from '@/utils/testData';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const WINDOW_TYPES = {
   sliding: 'Sliding Windows',
@@ -42,6 +43,7 @@ export function JobList() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [creatingTestData, setCreatingTestData] = useState(false);
   const userType = user?.user_metadata?.user_type;
+  const [activeTab, setActiveTab] = useState("all");
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -188,16 +190,384 @@ export function JobList() {
   // Use all jobs, handling missing properties in the UI
   const validJobs = jobs || [];
 
+  // Filter jobs based on the activeTab
+  const filterJobsByStatus = (jobs, status) => {
+    if (!jobs) return [];
+    if (status === 'all') return jobs;
+    
+    return jobs.filter(job => job.status === status);
+  };
+
+  // For cleaners we need to further categorize the jobs
+  const filterJobsForCleaner = () => {
+    if (!jobs) return { newJobs: [], quotedJobs: [], acceptedJobs: [], completedJobs: [] };
+    
+    const newJobs = jobs.filter(job => job.status === 'new');
+    
+    // Quoted jobs are jobs where the cleaner has submitted a quote (status might be 'new' or 'quoted')
+    const quotedJobs = jobs.filter(job => 
+      job.quotes?.some(quote => quote.cleaner.id === user?.id && quote.status === 'pending')
+    );
+    
+    // Accepted jobs are where the cleaner's quote has been accepted
+    const acceptedJobs = jobs.filter(job => 
+      job.status === 'accepted' && 
+      job.quotes?.some(quote => quote.cleaner.id === user?.id && quote.status === 'accepted')
+    );
+    
+    // Completed jobs
+    const completedJobs = jobs.filter(job => 
+      job.status === 'completed' && 
+      job.quotes?.some(quote => quote.cleaner.id === user?.id)
+    );
+    
+    return { newJobs, quotedJobs, acceptedJobs, completedJobs };
+  };
+
+  // Category counts for badge displays
+  const getCleanerCounts = () => {
+    const { newJobs, quotedJobs, acceptedJobs, completedJobs } = filterJobsForCleaner();
+    return {
+      all: jobs?.length || 0,
+      new: newJobs.length,
+      quoted: quotedJobs.length, 
+      accepted: acceptedJobs.length,
+      completed: completedJobs.length
+    };
+  };
+
+  // Different tabs based on user type
+  const renderTabContent = () => {
+    if (userType === 'cleaner') {
+      const { newJobs, quotedJobs, acceptedJobs, completedJobs } = filterJobsForCleaner();
+      const counts = getCleanerCounts();
+      
+      let jobsToDisplay = [];
+      switch (activeTab) {
+        case 'new': jobsToDisplay = newJobs; break;
+        case 'quoted': jobsToDisplay = quotedJobs; break;
+        case 'accepted': jobsToDisplay = acceptedJobs; break;
+        case 'completed': jobsToDisplay = completedJobs; break;
+        default: jobsToDisplay = validJobs;
+      }
+      
+      return (
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full mb-6 grid grid-cols-5">
+            <TabsTrigger value="all">
+              All <span className="ml-1 px-2 py-0.5 text-xs bg-gray-200 rounded-full">{counts.all}</span>
+            </TabsTrigger>
+            <TabsTrigger value="new">
+              New Jobs <span className="ml-1 px-2 py-0.5 text-xs bg-gray-200 rounded-full">{counts.new}</span>
+            </TabsTrigger>
+            <TabsTrigger value="quoted">
+              My Quotes <span className="ml-1 px-2 py-0.5 text-xs bg-gray-200 rounded-full">{counts.quoted}</span>
+            </TabsTrigger>
+            <TabsTrigger value="accepted">
+              Accepted <span className="ml-1 px-2 py-0.5 text-xs bg-gray-200 rounded-full">{counts.accepted}</span>
+            </TabsTrigger>
+            <TabsTrigger value="completed">
+              Completed <span className="ml-1 px-2 py-0.5 text-xs bg-gray-200 rounded-full">{counts.completed}</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <div className="space-y-6">
+            {jobsToDisplay.length === 0 ? (
+              <div className={styles.emptyState}>
+                <h3 className={styles.emptyStateTitle}>
+                  {(() => {
+                    switch (activeTab) {
+                      case 'new': return 'No new jobs available';
+                      case 'quoted': return 'You haven\'t quoted on any jobs yet';
+                      case 'accepted': return 'You don\'t have any accepted jobs';
+                      case 'completed': return 'You don\'t have any completed jobs';
+                      default: return 'No jobs available';
+                    }
+                  })()}
+                </h3>
+                <p className={styles.emptyStateText}>
+                  {(() => {
+                    switch (activeTab) {
+                      case 'new': return 'Check back later for new job opportunities';
+                      case 'quoted': return 'Start quoting on available jobs to see them here';
+                      case 'accepted': return 'When a homeowner accepts your quote, the job will appear here';
+                      case 'completed': return 'Jobs you\'ve completed will be shown here';
+                      default: return 'No jobs are currently available';
+                    }
+                  })()}
+                </p>
+              </div>
+            ) : (
+              jobsToDisplay.map((job) => renderJobCard(job))
+            )}
+          </div>
+        </Tabs>
+      );
+    } else {
+      // Homeowner view - uses simple filtering based on job status
+      const filteredJobs = filterJobsByStatus(validJobs, activeTab);
+      
+      return (
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full mb-6 grid grid-cols-5">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="new">New</TabsTrigger>
+            <TabsTrigger value="quoted">Quoted</TabsTrigger>
+            <TabsTrigger value="accepted">Accepted</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+          </TabsList>
+          
+          <div className="space-y-6">
+            {filteredJobs.length === 0 ? (
+              <div className={styles.emptyState}>
+                <h3 className={styles.emptyStateTitle}>No cleaning requests in this category</h3>
+                <p className={styles.emptyStateText}>
+                  Start by requesting a cleaning service for one of your properties
+                </p>
+                <Button onClick={() => navigate('/dashboard/properties')}>
+                  View My Properties
+                </Button>
+              </div>
+            ) : (
+              filteredJobs.map((job) => renderJobCard(job))
+            )}
+          </div>
+        </Tabs>
+      );
+    }
+  };
+
+  // Render a job card (extracted to avoid duplication)
+  const renderJobCard = (job) => (
+    <div key={job.id} className={styles.jobCard}>
+      <div className={styles.jobCardContent}>
+        <div className={styles.jobCardHeader}>
+          <div className={styles.jobCardStatus}>
+            <span className={`${styles.jobCardStatusBadge} ${getStatusColor(job.status)}`}>
+              {getStatusIcon(job.status)}
+              {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+            </span>
+            <span className={styles.jobCardDate}>
+              Posted {format(new Date(job.created_at), 'MMM d, yyyy')}
+            </span>
+          </div>
+          <div className={styles.jobCardActions}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/dashboard/jobs/${job.id}`)}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              View Details
+            </Button>
+            {userType === 'homeowner' && job.status === 'new' && (
+              showDeleteConfirm === job.id ? (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteJob(job.id)}
+                    isLoading={actionLoading === job.id}
+                  >
+                    Confirm Delete
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowDeleteConfirm(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(job.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Request
+                </Button>
+              )
+            )}
+          </div>
+        </div>
+
+        <div className={styles.jobCardGrid}>
+          <div className={styles.jobCardSection}>
+            {job.property ? (
+              <div className={styles.jobCardAddress}>
+                <MapPin className={styles.jobCardAddressIcon} />
+                <div>
+                  <h3 className={styles.jobCardAddressTitle}>
+                    {job.property.address_line1}
+                  </h3>
+                  {job.property.address_line2 && (
+                    <p className={styles.jobCardAddressText}>{job.property.address_line2}</p>
+                  )}
+                  <p className={styles.jobCardAddressText}>
+                    {job.property.city}, {job.property.postcode}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className={styles.jobCardAddress}>
+                <AlertCircle className={styles.jobCardAddressIcon} />
+                <div>
+                  <h3 className={styles.jobCardAddressTitle}>
+                    Property Details Unavailable
+                  </h3>
+                  <p className={styles.jobCardAddressText}>
+                    Contact support for assistance
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className={styles.jobCardDetail}>
+              <Calendar className={styles.jobCardDetailIcon} />
+              <div>
+                <p className={styles.jobCardDetailText}>
+                  Preferred Date: {format(new Date(job.preferred_date), 'MMMM d, yyyy')}
+                </p>
+                <p className={styles.jobCardDetailSubtext}>
+                  Preferred Time: {job.preferred_time}
+                </p>
+              </div>
+            </div>
+
+            {job.property ? (
+              <div className={styles.jobCardDetail}>
+                <Home className={styles.jobCardDetailIcon} />
+                <div>
+                  <p className={styles.jobCardDetailText}>
+                    {job.property.property_type}
+                  </p>
+                  <p className={styles.jobCardDetailSubtext}>
+                    {job.property.num_windows} windows · {job.property.num_floors} floor
+                    {job.property.num_floors > 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className={styles.jobCardDetail}>
+                <Home className={styles.jobCardDetailIcon} />
+                <div>
+                  <p className={styles.jobCardDetailText}>
+                    Property Type Unavailable
+                  </p>
+                  <p className={styles.jobCardDetailSubtext}>
+                    Details not accessible
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {userType === 'cleaner' && (
+              <div className={styles.jobCardDetail}>
+                <User className={styles.jobCardDetailIcon} />
+                <div>
+                  <p className={styles.jobCardDetailText}>
+                    {job.owner ? job.owner.full_name : 'Owner Details Unavailable'}
+                  </p>
+                  <p className={styles.jobCardDetailSubtext}>
+                    Property Owner
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className={styles.jobCardSection}>
+            <div>
+              <h4 className={styles.jobCardSectionTitle}>Window Types</h4>
+              {job.property && job.property.window_types ? (
+                <ul className={styles.jobCardWindowTypes}>
+                  {job.property.window_types.map((type) => (
+                    <li key={type} className={styles.jobCardWindowType}>
+                      {WINDOW_TYPES[type as keyof typeof WINDOW_TYPES]}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className={styles.jobCardDetailSubtext}>
+                  Window type information unavailable
+                </p>
+              )}
+            </div>
+
+            {job.description && (
+              <div className={styles.jobCardDescription}>
+                <h4 className={styles.jobCardSectionTitle}>Additional Details</h4>
+                <p>{job.description}</p>
+              </div>
+            )}
+
+            {userType === 'homeowner' && job.quotes && job.quotes.length > 0 && (
+              <div className={styles.jobCardQuotes}>
+                <h4 className={styles.jobCardQuotesTitle}>
+                  Quotes Received
+                </h4>
+                <div className={styles.jobCardQuotesList}>
+                  {job.quotes.map((quote) => (
+                    <div
+                      key={quote.id}
+                      className={styles.jobCardQuoteItem}
+                    >
+                      <div>
+                        <p className={styles.jobCardQuoteAmount}>
+                          £{quote.amount}
+                        </p>
+                        <p className={styles.jobCardQuoteBusiness}>
+                          from {quote.cleaner.business_name}
+                        </p>
+                      </div>
+                      {job.status === 'quoted' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleAcceptQuote(job.id, quote.id)}
+                          isLoading={actionLoading === job.id}
+                        >
+                          Accept Quote
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {job.property && job.property.images && job.property.images.length > 0 && (
+          <div className={styles.jobCardImages}>
+            <h4 className={styles.jobCardSectionTitle}>Property Images</h4>
+            <div className={styles.jobCardImageGrid}>
+              {job.property.images.slice(0, 4).map((image) => (
+                <img
+                  key={image.id}
+                  src={image.image_url}
+                  alt="Property"
+                  className={styles.jobCardImage}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <div>
           <h1 className={styles.headerTitle}>
-            {userType === 'cleaner' ? 'Available Jobs' : 'My Cleaning Requests'}
+            {userType === 'cleaner' ? 'Jobs Dashboard' : 'My Cleaning Requests'}
           </h1>
           <p className={styles.headerSubtitle}>
             {userType === 'cleaner' 
-              ? 'Browse and quote on available window cleaning jobs'
+              ? 'Manage all your window cleaning jobs in one place'
               : 'Manage your window cleaning service requests'
             }
           </p>
@@ -249,227 +619,7 @@ export function JobList() {
           </div>
         </div>
       ) : (
-        <div className="space-y-6">
-          {validJobs.map((job) => (
-            <div key={job.id} className={styles.jobCard}>
-              <div className={styles.jobCardContent}>
-                <div className={styles.jobCardHeader}>
-                  <div className={styles.jobCardStatus}>
-                    <span className={`${styles.jobCardStatusBadge} ${getStatusColor(job.status)}`}>
-                      {getStatusIcon(job.status)}
-                      {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                    </span>
-                    <span className={styles.jobCardDate}>
-                      Posted {format(new Date(job.created_at), 'MMM d, yyyy')}
-                    </span>
-                  </div>
-                  <div className={styles.jobCardActions}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/dashboard/jobs/${job.id}`)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Details
-                    </Button>
-                    {userType === 'homeowner' && job.status === 'new' && (
-                      showDeleteConfirm === job.id ? (
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteJob(job.id)}
-                            isLoading={actionLoading === job.id}
-                          >
-                            Confirm Delete
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowDeleteConfirm(null)}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => setShowDeleteConfirm(job.id)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Request
-                        </Button>
-                      )
-                    )}
-                  </div>
-                </div>
-
-                <div className={styles.jobCardGrid}>
-                  <div className={styles.jobCardSection}>
-                    {job.property ? (
-                      <div className={styles.jobCardAddress}>
-                        <MapPin className={styles.jobCardAddressIcon} />
-                        <div>
-                          <h3 className={styles.jobCardAddressTitle}>
-                            {job.property.address_line1}
-                          </h3>
-                          {job.property.address_line2 && (
-                            <p className={styles.jobCardAddressText}>{job.property.address_line2}</p>
-                          )}
-                          <p className={styles.jobCardAddressText}>
-                            {job.property.city}, {job.property.postcode}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={styles.jobCardAddress}>
-                        <AlertCircle className={styles.jobCardAddressIcon} />
-                        <div>
-                          <h3 className={styles.jobCardAddressTitle}>
-                            Property Details Unavailable
-                          </h3>
-                          <p className={styles.jobCardAddressText}>
-                            Contact support for assistance
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className={styles.jobCardDetail}>
-                      <Calendar className={styles.jobCardDetailIcon} />
-                      <div>
-                        <p className={styles.jobCardDetailText}>
-                          Preferred Date: {format(new Date(job.preferred_date), 'MMMM d, yyyy')}
-                        </p>
-                        <p className={styles.jobCardDetailSubtext}>
-                          Preferred Time: {job.preferred_time}
-                        </p>
-                      </div>
-                    </div>
-
-                    {job.property ? (
-                      <div className={styles.jobCardDetail}>
-                        <Home className={styles.jobCardDetailIcon} />
-                        <div>
-                          <p className={styles.jobCardDetailText}>
-                            {job.property.property_type}
-                          </p>
-                          <p className={styles.jobCardDetailSubtext}>
-                            {job.property.num_windows} windows · {job.property.num_floors} floor
-                            {job.property.num_floors > 1 ? 's' : ''}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={styles.jobCardDetail}>
-                        <Home className={styles.jobCardDetailIcon} />
-                        <div>
-                          <p className={styles.jobCardDetailText}>
-                            Property Type Unavailable
-                          </p>
-                          <p className={styles.jobCardDetailSubtext}>
-                            Details not accessible
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {userType === 'cleaner' && (
-                      <div className={styles.jobCardDetail}>
-                        <User className={styles.jobCardDetailIcon} />
-                        <div>
-                          <p className={styles.jobCardDetailText}>
-                            {job.owner ? job.owner.full_name : 'Owner Details Unavailable'}
-                          </p>
-                          <p className={styles.jobCardDetailSubtext}>
-                            Property Owner
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={styles.jobCardSection}>
-                    <div>
-                      <h4 className={styles.jobCardSectionTitle}>Window Types</h4>
-                      {job.property && job.property.window_types ? (
-                        <ul className={styles.jobCardWindowTypes}>
-                          {job.property.window_types.map((type) => (
-                            <li key={type} className={styles.jobCardWindowType}>
-                              {WINDOW_TYPES[type as keyof typeof WINDOW_TYPES]}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className={styles.jobCardDetailSubtext}>
-                          Window type information unavailable
-                        </p>
-                      )}
-                    </div>
-
-                    {job.description && (
-                      <div className={styles.jobCardDescription}>
-                        <h4 className={styles.jobCardSectionTitle}>Additional Details</h4>
-                        <p>{job.description}</p>
-                      </div>
-                    )}
-
-                    {userType === 'homeowner' && job.quotes && job.quotes.length > 0 && (
-                      <div className={styles.jobCardQuotes}>
-                        <h4 className={styles.jobCardQuotesTitle}>
-                          Quotes Received
-                        </h4>
-                        <div className={styles.jobCardQuotesList}>
-                          {job.quotes.map((quote) => (
-                            <div
-                              key={quote.id}
-                              className={styles.jobCardQuoteItem}
-                            >
-                              <div>
-                                <p className={styles.jobCardQuoteAmount}>
-                                  £{quote.amount}
-                                </p>
-                                <p className={styles.jobCardQuoteBusiness}>
-                                  from {quote.cleaner.business_name}
-                                </p>
-                              </div>
-                              {job.status === 'quoted' && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleAcceptQuote(job.id, quote.id)}
-                                  isLoading={actionLoading === job.id}
-                                >
-                                  Accept Quote
-                                </Button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {job.property && job.property.images && job.property.images.length > 0 && (
-                  <div className={styles.jobCardImages}>
-                    <h4 className={styles.jobCardSectionTitle}>Property Images</h4>
-                    <div className={styles.jobCardImageGrid}>
-                      {job.property.images.slice(0, 4).map((image) => (
-                        <img
-                          key={image.id}
-                          src={image.image_url}
-                          alt="Property"
-                          className={styles.jobCardImage}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        renderTabContent()
       )}
     </div>
   );
