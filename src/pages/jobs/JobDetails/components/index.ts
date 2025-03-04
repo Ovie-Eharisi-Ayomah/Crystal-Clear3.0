@@ -8,3 +8,4 @@ export * from './WithdrawConfirm';
 export * from './DeleteConfirmation';
 export * from './ImageModal';
 export * from './JobActions';
+export * from './JobActionsOwner';

@@ -2,14 +2,22 @@ Cleaner bugs:
   - [FIXED] Cleaners cannot view job details @started(25-03-03 16:43) @done(25-03-03 16:45) @lasted(2m15s)
   - [FIXED] Cleaners cannot see jobs they have quoted on @started(25-03-03 16:43) @done(25-03-03 16:45) @lasted(2m15s)
   ✔ [FIXED] Cleaners cannot see "Withdraw Quote" button on quoted jobs @started(25-03-03 16:24) @done(25-03-03 16:33) @lasted(9m46s)
-  ✔ Cleaners see a "Contact Owner" button on the job details page when their quote is accepted @started(25-03-03 17:30) @done(25-03-03 17:55) @lasted(25m)
-  ✔ Cleaners see a "Mark Job as Complete" button on the job details page when their quote is accepted @started(25-03-03 17:30) @done(25-03-03 17:55) @lasted(25m)
-  ✔ Cleaners see a "Cancel Job" button on the job details page when their quote is accepted @started(25-03-03 17:30) @done(25-03-03 17:55) @lasted(25m)
+  ✔ Cleaners do not see a "Contact Owner" button on the job details page when their quote is accepted @started(25-03-03 17:30) @done(25-03-03 17:55) @lasted(25m)
+  ✔ Cleaners do not see a "Mark Job as Complete" button on the job details page when their quote is accepted @started(25-03-03 17:30) @done(25-03-03 17:55) @lasted(25m)
+  ✔ Cleaners do not see a "Cancel Job" button on the job details page when their quote is accepted @started(25-03-03 17:30) @done(25-03-03 17:55) @lasted(25m)
+  ✔ Cleaners see a withdraw quote button on the job details page even when the job has been marked as complete @started(25-03-04 12:23) @done(25-03-04 12:27) @lasted(4m14s)
+  - Cleaners see jobs that have been accepted by other cleaners
+  - Cleaners cannot see jobs that other cleaners have quoted on
+  - Cleaners should see the owner's comment and not the cleaner's comment on the job details page of a completed job
+  - When a cleaner cancels a job, their quote is not removed from the job
+  - When a cleaner cancels a job, the owner is not notified
+  - When an owner declines a quote, the cleaner is not notified and the quote is not removed from the job
 
 Homeowner bugs:
   - [FIXED - TEMPORARY] Owners cannot see any properties 
   - [FIXED - TEMPORARY] Owners cannot see any requests
   - [FIXED - TEMPORARY] Owners see all requests instead of just their own
+  - Owner should see cleaners comment and not the owner's comment on the job details page of a completed job
 
 Critical security issues:
   - RLS (Row Level Security) policies were temporarily disabled on job_requests and quotes tables

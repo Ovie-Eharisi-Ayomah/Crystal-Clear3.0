@@ -59,6 +59,23 @@ export function useProfile() {
 
     loadProfile();
   }, [user]);
+  
+  const getProfileById = async (profileId: string): Promise<Profile | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', profileId)
+        .single();
+        
+      if (error) throw error;
+      
+      return data;
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      return null;
+    }
+  };
 
   const updateProfile = async (updates: ProfileUpdate) => {
     if (!user) throw new Error('No authenticated user');
@@ -126,6 +143,7 @@ export function useProfile() {
     error,
     updateProfile,
     uploadAvatar,
-    deleteAccount
+    deleteAccount,
+    getProfileById
   };
 }
