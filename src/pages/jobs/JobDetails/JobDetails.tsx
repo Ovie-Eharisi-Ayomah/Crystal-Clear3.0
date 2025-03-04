@@ -340,6 +340,7 @@ export function JobDetails() {
                           amount={quoteAmount}
                           message={quoteMessage}
                           onWithdrawClick={() => setShowWithdrawConfirm(true)}
+                          jobStatus={job.status}
                         />
                       )}
                     </>

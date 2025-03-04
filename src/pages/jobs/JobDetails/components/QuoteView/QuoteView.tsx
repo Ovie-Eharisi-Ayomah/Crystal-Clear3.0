@@ -6,9 +6,15 @@ interface QuoteViewProps {
   amount: string;
   message: string;
   onWithdrawClick: () => void;
+  jobStatus?: 'new' | 'quoted' | 'accepted' | 'completed' | 'cancelled';
 }
 
-export const QuoteView: React.FC<QuoteViewProps> = ({ amount, message, onWithdrawClick }) => {
+export const QuoteView: React.FC<QuoteViewProps> = ({ 
+  amount, 
+  message, 
+  onWithdrawClick,
+  jobStatus = 'quoted'
+}) => {
   return (
     <div className="quote-view space-y-4">
       <div className="rounded-md bg-green-50 p-4 text-center mb-4">
@@ -25,13 +31,16 @@ export const QuoteView: React.FC<QuoteViewProps> = ({ amount, message, onWithdra
         )}
       </div>
       
-      <Button 
-        variant="destructive" 
-        className="w-full"
-        onClick={onWithdrawClick}
-      >
-        Withdraw Quote
-      </Button>
+      {/* Only show withdraw button if job is in new or quoted status */}
+      {(jobStatus === 'new' || jobStatus === 'quoted') && (
+        <Button 
+          variant="destructive" 
+          className="w-full"
+          onClick={onWithdrawClick}
+        >
+          Withdraw Quote
+        </Button>
+      )}
     </div>
   );
 };
