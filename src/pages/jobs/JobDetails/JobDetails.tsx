@@ -9,6 +9,7 @@ import { ArrowLeft, Trash2, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
+import { PaymentSection } from '@/components/payments/PaymentSection';
 import './JobDetails.css';
 
 // Import all components
@@ -328,13 +329,14 @@ export function JobDetails() {
           {userType === 'cleaner' && (
             <>
               {/* Show job actions for accepted jobs where the cleaner's quote was accepted */}
-              {job.status === 'accepted' && job.quotes && job.quotes.some(quote => 
+              {(job.status === 'accepted' || job.status === 'cleaner_completed') && job.quotes && job.quotes.some(quote => 
                 quote.cleaner.id === user?.id && quote.status === 'accepted'
               ) ? (
                 <JobActions 
                   jobId={jobId!}
                   ownerEmail={job.owner.email}
                   ownerPhone={job.owner.phone}
+                  jobStatus={job.status}
                   onStatusChange={() => window.location.reload()}
                 />
               ) : (
@@ -402,13 +404,14 @@ export function JobDetails() {
           {userType === 'homeowner' && (
             <>
               {/* Job actions for accepted jobs */}
-              {job.status === 'accepted' && job.quotes && job.quotes.some(q => q.status === 'accepted') && (
+              {(job.status === 'accepted' || job.status === 'cleaner_completed') && job.quotes && job.quotes.some(q => q.status === 'accepted') && (
                 <JobActionsOwner 
                   jobId={jobId!}
                   cleanerId={job.quotes.find(q => q.status === 'accepted')!.cleaner.id}
                   cleanerName={job.quotes.find(q => q.status === 'accepted')!.cleaner.business_name}
                   cleanerEmail={cleanerProfile?.email}
                   cleanerPhone={cleanerProfile?.phone}
+                  jobStatus={job.status}
                   onStatusChange={() => window.location.reload()}
                 />
               )}
@@ -429,7 +432,33 @@ export function JobDetails() {
             </>
           )}
           
-          {/* Review section for completed jobs */}
+          {/* Payment section for completed jobs */}
+          {job.status === 'cleaner_completed' && userType === 'homeowner' && (
+            <div className="space-y-6">
+              <PaymentSection 
+                jobId={jobId!} 
+                quoteAmount={parseFloat(job.quotes?.find(q => q.status === 'accepted')?.amount ?? '0')}
+                cleanerId={job.quotes?.find(q => q.status === 'accepted')?.cleaner.id || ''}
+                cleanerName={job.quotes?.find(q => q.status === 'accepted')?.cleaner.business_name || ''}
+                onPaymentInitiated={() => window.location.reload()}
+              />
+            </div>
+          )}
+          
+          {/* Payment section for completed jobs shown to cleaners */}
+          {job.status === 'cleaner_completed' && userType === 'cleaner' && job.quotes && job.quotes.some(q => q.cleaner.id === user?.id) && (
+            <div className="space-y-6">
+              <PaymentSection 
+                jobId={jobId!} 
+                quoteAmount={parseFloat(job.quotes?.find(q => q.cleaner.id === user?.id)?.amount ?? '0')}
+                cleanerId={user?.id || ''}
+                cleanerName={user?.user_metadata?.business_name || ''}
+                onPaymentInitiated={() => window.location.reload()}
+              />
+            </div>
+          )}
+          
+          {/* Review section for completed jobs (only when fully completed, not just cleaner_completed) */}
           {job.status === 'completed' && (
             <div className="space-y-6">
               {/* Homeowner review section */}

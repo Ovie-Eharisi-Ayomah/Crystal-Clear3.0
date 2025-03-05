@@ -10,7 +10,7 @@ interface JobRequest {
   property_id: string;
   owner_id: string;
   cleaner_id: string | null;
-  status: 'new' | 'quoted' | 'accepted' | 'completed' | 'cancelled';
+  status: 'new' | 'quoted' | 'accepted' | 'cleaner_completed' | 'completed' | 'cancelled';
   description: string;
   preferred_date: string;
   preferred_time: string;
@@ -471,7 +471,7 @@ export function useUpdateJobStatus() {
     setError(null);
 
     try {
-      console.log(`Marking job ${jobId} as completed`);
+      console.log(`Marking job ${jobId} as ready for completion by cleaner`);
       
       // First check if there's an accepted quote for this job from this cleaner
       const { data: quote, error: quoteError } = await supabase
@@ -488,21 +488,21 @@ export function useUpdateJobStatus() {
         throw new Error('You do not have an accepted quote for this job');
       }
 
-      // Update the job status to 'completed'
+      // Update the job status to 'cleaner_completed' instead of 'completed'
       const { data, error: updateError } = await supabase
         .from('job_requests')
-        .update({ status: 'completed' })
+        .update({ status: 'cleaner_completed' })
         .eq('id', jobId)
         .select()
         .single();
 
       if (updateError) throw updateError;
       
-      console.log('Job marked as completed:', data);
+      console.log('Job marked as cleaner_completed:', data);
       return data;
     } catch (err) {
-      console.error('Error completing job:', err);
-      setError(err instanceof Error ? err.message : 'Failed to complete job');
+      console.error('Error marking job as completed by cleaner:', err);
+      setError(err instanceof Error ? err.message : 'Failed to mark job as completed');
       throw err;
     } finally {
       setIsLoading(false);

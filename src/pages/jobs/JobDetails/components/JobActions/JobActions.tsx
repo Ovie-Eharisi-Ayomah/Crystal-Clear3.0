@@ -8,6 +8,7 @@ interface JobActionsProps {
   jobId: string;
   ownerEmail: string;
   ownerPhone: string | null;
+  jobStatus: 'new' | 'quoted' | 'accepted' | 'cleaner_completed' | 'completed' | 'cancelled';
   onStatusChange: () => void;
 }
 
@@ -107,6 +108,7 @@ export const JobActions: React.FC<JobActionsProps> = ({
   jobId,
   ownerEmail,
   ownerPhone,
+  jobStatus,
   onStatusChange
 }) => {
   const { completeJob, cancelJob, isLoading, error } = useUpdateJobStatus();
@@ -156,25 +158,39 @@ export const JobActions: React.FC<JobActionsProps> = ({
           Contact Owner
         </Button>
         
-        <Button
-          onClick={() => setShowCompleteModal(true)}
-          className="w-full"
-          variant="default"
-          size="default"
-        >
-          <CheckCircle className="h-4 w-4 mr-2" />
-          Mark Job as Complete
-        </Button>
+        {jobStatus === 'accepted' ? (
+          <Button
+            onClick={() => setShowCompleteModal(true)}
+            className="w-full"
+            variant="default"
+            size="default"
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Mark Job as Complete
+          </Button>
+        ) : jobStatus === 'cleaner_completed' ? (
+          <Button
+            className="w-full"
+            variant="outline"
+            size="default"
+            disabled
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Waiting for Owner Confirmation
+          </Button>
+        ) : null}
         
-        <Button
-          onClick={() => setShowCancelModal(true)}
-          className="w-full"
-          variant="destructive"
-          size="default"
-        >
-          <XCircle className="h-4 w-4 mr-2" />
-          Cancel Job
-        </Button>
+        {(jobStatus === 'accepted' || jobStatus === 'cleaner_completed') && (
+          <Button
+            onClick={() => setShowCancelModal(true)}
+            className="w-full"
+            variant="destructive"
+            size="default"
+          >
+            <XCircle className="h-4 w-4 mr-2" />
+            Cancel Job
+          </Button>
+        )}
       </div>
       
       {/* Contact Modal */}
@@ -190,8 +206,8 @@ export const JobActions: React.FC<JobActionsProps> = ({
         isOpen={showCompleteModal}
         onClose={() => setShowCompleteModal(false)}
         onConfirm={handleCompleteJob}
-        title="Complete Job"
-        description="Are you sure you want to mark this job as completed? This action cannot be undone."
+        title="Mark Job as Complete"
+        description="By marking this job as complete, you indicate that the work has been done. The homeowner will need to confirm completion before the job is finalized and reviews can be left."
         confirmText="Mark as Complete"
         isLoading={isLoading}
       />

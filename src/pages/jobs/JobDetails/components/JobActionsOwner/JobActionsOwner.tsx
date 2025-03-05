@@ -10,6 +10,7 @@ interface JobActionsOwnerProps {
   cleanerName: string;
   cleanerEmail?: string;
   cleanerPhone?: string;
+  jobStatus: 'new' | 'quoted' | 'accepted' | 'cleaner_completed' | 'completed' | 'cancelled';
   onStatusChange: () => void;
 }
 
@@ -121,6 +122,7 @@ export const JobActionsOwner: React.FC<JobActionsOwnerProps> = ({
   cleanerName,
   cleanerEmail,
   cleanerPhone,
+  jobStatus,
   onStatusChange
 }) => {
   const [showContactModal, setShowContactModal] = useState(false);
@@ -129,7 +131,7 @@ export const JobActionsOwner: React.FC<JobActionsOwnerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  // Function to mark a job as complete
+  // Function to mark a job as complete (only callable after cleaner has marked it as completed)
   const handleConfirmComplete = async () => {
     setIsLoading(true);
     setActionError(null);
@@ -139,6 +141,7 @@ export const JobActionsOwner: React.FC<JobActionsOwnerProps> = ({
         .from('job_requests')
         .update({ status: 'completed' })
         .eq('id', jobId)
+        .eq('status', 'cleaner_completed') // Only allow completing jobs that cleaners have marked as completed
         .select();
 
       if (error) throw error;
@@ -208,15 +211,27 @@ export const JobActionsOwner: React.FC<JobActionsOwnerProps> = ({
           Contact Cleaner
         </Button>
         
-        <Button
-          onClick={() => setShowCompleteModal(true)}
-          className="w-full"
-          variant="default"
-          size="default"
-        >
-          <CheckCircle className="h-4 w-4 mr-2" />
-          Confirm Job as Complete
-        </Button>
+        {jobStatus === 'cleaner_completed' ? (
+          <Button
+            onClick={() => setShowCompleteModal(true)}
+            className="w-full"
+            variant="default"
+            size="default"
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Confirm Job as Complete
+          </Button>
+        ) : (
+          <Button
+            className="w-full"
+            variant="outline"
+            size="default"
+            disabled
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Waiting for Cleaner to Mark Complete
+          </Button>
+        )}
         
         <Button
           onClick={() => setShowCancelModal(true)}
@@ -243,9 +258,9 @@ export const JobActionsOwner: React.FC<JobActionsOwnerProps> = ({
         isOpen={showCompleteModal}
         onClose={() => setShowCompleteModal(false)}
         onConfirm={handleConfirmComplete}
-        title="Complete Job"
-        description="Are you sure the job has been completed? This will allow both parties to leave reviews."
-        confirmText="Mark as Complete"
+        title="Confirm Job Completion"
+        description="The cleaner has marked this job as complete. By confirming, you agree that the work has been finished satisfactorily. This will allow both parties to leave reviews."
+        confirmText="Confirm Completion"
         isLoading={isLoading}
       />
       

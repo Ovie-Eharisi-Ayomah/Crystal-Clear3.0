@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { PaymentMethodList } from '@/components/payments/PaymentMethodList';
 import {
   Camera,
   Mail,
@@ -13,7 +14,8 @@ import {
   Building2,
   MapPin,
   DollarSign,
-  Shield
+  Shield,
+  CreditCard
 } from 'lucide-react';
 
 export function Settings() {
@@ -294,6 +296,20 @@ export function Settings() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+          
+          {/* Payment Methods section for cleaners */}
+          {profile?.user_type === 'cleaner' && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">
+                <CreditCard className="inline-block h-5 w-5 mr-2 text-gray-500" />
+                Payment Methods
+              </h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Add your payment details so homeowners can pay you for completed jobs.
+              </p>
+              <PaymentMethodList />
             </div>
           )}
 

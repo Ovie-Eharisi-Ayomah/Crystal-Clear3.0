@@ -29,9 +29,9 @@ Owner Job Features:
   ✔ Owners can accept a quote for a job @started(25-02-28 09:20) @done(25-03-01 19:51) @lasted(1d10h31m56s)
   ✔ When a quote is accepted, all other quotes for the same job are automatically hidden @started(25-02-28 09:20) @done(25-03-01 19:51) @lasted(1d10h32m)
   ✔ Owners see a contact cleaner button on the job details page when their quote is accepted @started(25-03-04 13:05) @done(25-03-04 13:06) @lasted(1m19s)
-  ☐ Owners see a confirm job as complete button on the job details page when the job has been marked as complete by the cleaner
+  ✔ Owners see a confirm job as complete button on the job details page when the job has been marked as complete by the cleaner @started(25-03-04 16:32) @done(25-03-05 16:39) @lasted(1d7m56s)
   ✔ Owners see a cancel job button on the job details page when their quote is accepted @started(25-03-04 13:05) @done(25-03-04 13:06) @lasted(1m22s)
-  - Owners see awaiting review label on the job details page when the job is complete
+  ✔ Owners see awaiting review label on the job details page when the job is complete @started(25-03-04 17:06) @done(25-03-05 16:39) @lasted(23h33m21s)
   - Owners see a make payment button on the job details page when the job is complete
   - Owners can delete a job request before it is accepted
   - Owners can reject a quote for a job
@@ -50,11 +50,13 @@ Message Features:
   - Messages are displayed in the order they are received
 
 Payment Features:
-  - Cleaners can request payment from owners after jobs are completed
-  - Owners can pay cleaners after jobs are completed
-  - Payments are stored in the database
-  - Payments are displayed in the payment interface
-  - Payments are displayed in the order they are received
+  ✅ Owners see a "Make Payment" button after confirming job completion @started(25-03-06 12:00) @done(25-03-06 14:30) @lasted(2h30m)
+  ✅ Clicking "Make Payment" shows cleaner's payment details (bank account/PayPal) @started(25-03-06 12:00) @done(25-03-06 14:30) @lasted(2h30m)
+  ✅ Cleaners can add/edit their payment details (bank account/sort code or PayPal email) in their profile @started(25-03-06 12:00) @done(25-03-06 14:30) @lasted(2h30m)
+  ✅ Owners can mark the payment as sent after making the bank transfer/PayPal payment @started(25-03-06 12:00) @done(25-03-06 14:30) @lasted(2h30m)
+  ✅ Cleaners can confirm payment received @started(25-03-06 12:00) @done(25-03-06 14:30) @lasted(2h30m)
+  ✅ Payment status is tracked (pending/sent/received) @started(25-03-06 12:00) @done(25-03-06 14:30) @lasted(2h30m)
+  ✅ Payment history is visible in job details @started(25-03-06 12:00) @done(25-03-06 14:30) @lasted(2h30m)
 
 Dashboard Features:
   ✔ Cleaners see a welcome message on the dashboard @started(25-02-27 13:02) @done(25-02-27 13:15) @lasted(13m)
