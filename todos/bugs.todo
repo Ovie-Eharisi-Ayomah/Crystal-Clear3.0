@@ -13,7 +13,7 @@ Cleaner bugs:
   - When a cleaner cancels a job, the owner is not notified
   - When an owner declines a quote, the cleaner is not notified and the quote is not removed from the job
   - Implement two-step job completion: When a cleaner marks a job as complete, it should change to 'cleaner_completed' status and the owner must confirm to mark it as fully 'completed'
-  - Cleaners cannot add payment details to their profile
+  - Cleaners cannot add payment details to their profile. It does not show up on database
 
 Homeowner bugs:
   - [FIXED - TEMPORARY] Owners cannot see any properties 
