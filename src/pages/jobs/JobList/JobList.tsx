@@ -594,29 +594,11 @@ export function JobList() {
             </Button>
           )}
           
-          {/* Developer information panel */}
-          <div className="mt-6 p-4 border border-dashed border-gray-300 rounded-md">
-            <p className="text-sm font-semibold text-gray-700 mb-2">Why am I not seeing any jobs?</p>
-            
-            <div className="space-y-2 text-sm text-gray-600">
-              <p>
-                <strong>For Cleaners:</strong> Jobs will appear here when homeowners create cleaning requests.
-              </p>
-              <p>
-                <strong>For Developers:</strong> Here are potential issues:
-              </p>
-              <ol className="list-decimal pl-5 space-y-1 text-xs">
-                <li>No job requests exist in the database yet</li>
-                <li>RLS policies are preventing cleaners from seeing jobs</li>
-                <li>Jobs exist but don't have the 'new' status</li>
-                <li>Join queries are failing between tables</li>
-              </ol>
-              
-              <p className="text-xs mt-3">
-                To create jobs: log in as a homeowner, add a property, then create a cleaning request.
-              </p>
-            </div>
-          </div>
+          {userType === 'cleaner' && (
+            <p className="mt-6 text-sm text-gray-600">
+              Jobs will appear here when homeowners create cleaning requests.
+            </p>
+          )}
         </div>
       ) : (
         renderTabContent()
