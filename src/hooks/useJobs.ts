@@ -80,7 +80,9 @@ export function useJobs() {
         // Apply the appropriate filters based on user role
         if (user.user_metadata?.user_type === 'cleaner') {
           console.log('User is a cleaner:', user.id);
-          query = query.or('status.eq.new,cleaner_id.eq.' + user.id);
+          // Allow cleaners to see jobs that are new, quoted, or assigned to them
+          query = query.or('status.eq.new,status.eq.quoted,cleaner_id.eq.' + user.id);
+          console.log('Cleaner query includes new, quoted, and assigned jobs');
         } else {
           console.log('User is a homeowner:', user.id);
           query = query.eq('owner_id', user.id);
@@ -321,11 +323,30 @@ export function useJob(jobId: string) {
 
       try {
         console.log(`Loading job details for ID: ${jobId}`);
-        const { data, error: queryError } = await supabase
+        
+        // First check if user is a cleaner and job status is 'quoted'
+        if (user.user_metadata?.user_type === 'cleaner') {
+          console.log('Loading job details for cleaner with expanded permissions');
+        }
+        
+        // Step 1: Get the job basic info first
+        const { data: jobData, error: jobError } = await supabase
           .from('job_requests')
-          .select(`
-            *,
-            property:properties (
+          .select('*')
+          .eq('id', jobId)
+          .single();
+
+        if (jobError) throw jobError;
+        if (!jobData) throw new Error('Job not found');
+        
+        console.log('Basic job data loaded:', jobData);
+        
+        // Step 2: Fetch property data separately
+        let property = null;
+        try {
+          const { data: propertyData } = await supabase
+            .from('properties')
+            .select(`
               id,
               address_line1,
               address_line2,
@@ -334,50 +355,129 @@ export function useJob(jobId: string) {
               property_type,
               num_floors,
               num_windows,
-              window_types,
-              images:property_images (
-                id,
-                image_url,
-                image_type
-              )
-            ),
-            owner:profiles!job_requests_owner_id_fkey (
-              id,
-              full_name,
-              email,
-              phone
-            ),
-            quotes (
-              id,
-              amount,
-              message,
-              status,
-              cleaner:profiles (
-                id,
-                business_name
-              )
-            )
-          `)
-          .eq('id', jobId)
-          .single();
-
-        console.log('Job query result:', {
-          found: !!data,
-          hasProperty: !!data?.property,
-          hasOwner: !!data?.owner,
-          error: queryError
-        });
-
-        if (queryError) throw queryError;
-        if (!data) throw new Error('Job not found');
-        
-        // Log a warning instead of throwing an error if property data is missing
-        if (!data.property) {
-          console.warn('Job property data not found', { jobId, data });
+              window_types
+            `)
+            .eq('id', jobData.property_id)
+            .single();
+            
+          if (propertyData) {
+            property = propertyData;
+            
+            // Now fetch images for the property
+            const { data: imageData } = await supabase
+              .from('property_images')
+              .select('id, image_url, image_type')
+              .eq('property_id', jobData.property_id);
+              
+            if (imageData && imageData.length > 0) {
+              property.images = imageData;
+            }
+          }
+        } catch (err) {
+          console.warn(`Could not load property for job ${jobId}:`, err);
         }
         
+        // Step 3: Fetch owner data separately
+        let owner = null;
+        try {
+          const { data: ownerData } = await supabase
+            .from('profiles')
+            .select('id, full_name, email, phone')
+            .eq('id', jobData.owner_id)
+            .single();
+            
+          if (ownerData) {
+            owner = ownerData;
+          }
+        } catch (err) {
+          console.warn(`Could not load owner for job ${jobId}:`, err);
+        }
+        
+        // Step 4: Fetch quotes separately
+        let quotes = [];
+        try {
+          const { data: quotesData } = await supabase
+            .from('quotes')
+            .select(`
+              id, 
+              amount, 
+              message, 
+              status,
+              cleaner_id
+            `)
+            .eq('job_request_id', jobId);
+            
+          if (quotesData && quotesData.length > 0) {
+            // For each quote, fetch cleaner details
+            quotes = await Promise.all(quotesData.map(async (quote) => {
+              let cleaner = null;
+              try {
+                const { data: cleanerData } = await supabase
+                  .from('profiles')
+                  .select('id, business_name')
+                  .eq('id', quote.cleaner_id)
+                  .single();
+                  
+                if (cleanerData) {
+                  cleaner = cleanerData;
+                }
+              } catch (err) {
+                console.warn(`Could not load cleaner for quote ${quote.id}:`, err);
+              }
+              
+              return {
+                ...quote,
+                cleaner: cleaner || { 
+                  id: quote.cleaner_id || 'unknown',
+                  business_name: 'Business details unavailable'
+                }
+              };
+            }));
+          }
+        } catch (err) {
+          console.warn(`Could not load quotes for job ${jobId}:`, err);
+        }
+        
+        // If property or owner is missing, add placeholders
+        if (!property) {
+          console.log(`Adding placeholder property data for job ${jobId}`);
+          property = {
+            id: jobData.property_id || 'unknown',
+            address_line1: 'Property details unavailable',
+            city: 'Unknown',
+            postcode: 'Unknown',
+            property_type: 'Unknown',
+            num_floors: 1,
+            num_windows: 0,
+            window_types: []
+          };
+        }
+        
+        if (!owner) {
+          console.log(`Adding placeholder owner data for job ${jobId}`);
+          owner = {
+            id: jobData.owner_id || 'unknown',
+            full_name: 'Owner details unavailable',
+            email: 'unavailable@example.com',
+            phone: 'unavailable'
+          };
+        }
+        
+        const fullJobData = {
+          ...jobData,
+          property,
+          owner,
+          quotes: quotes.length > 0 ? quotes : undefined
+        };
+        
+        console.log('Job data with all details:', {
+          hasProperty: !!fullJobData.property,
+          hasOwner: !!fullJobData.owner,
+          quotesCount: fullJobData.quotes?.length || 0
+        });
+        
         if (isMounted) {
-          setJob(data);
+          setJob(fullJobData);
           setError(null);
         }
       } catch (err) {

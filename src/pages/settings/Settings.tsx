@@ -309,6 +309,41 @@ export function Settings() {
               <p className="text-sm text-gray-500 mb-4">
                 Add your payment details so homeowners can pay you for completed jobs.
               </p>
+              
+              {/* Debug info - make this clearer for debugging */}
+              <div className="mb-4 text-xs bg-gray-50 p-3 rounded">
+                <p><strong>Debugging:</strong> User ID: {user?.id}</p>
+                <p><strong>User Metadata Type:</strong> {user?.user_metadata?.user_type || 'Not set'}</p>
+                <p><strong>Profile Type:</strong> {profile?.user_type}</p>
+                {user?.user_metadata?.user_type !== 'cleaner' && (
+                  <div className="mt-2">
+                    <p className="text-orange-600 font-medium">Your user account is not properly set as a cleaner in user metadata.</p>
+                    <Button 
+                      onClick={async () => {
+                        try {
+                          // Update user metadata
+                          const { error: updateError } = await supabase.auth.updateUser({
+                            data: { user_type: 'cleaner' }
+                          });
+                          
+                          if (updateError) throw updateError;
+                          
+                          alert('User type fixed! Page will reload.');
+                          window.location.reload();
+                        } catch (err) {
+                          alert(`Error fixing user type: ${err instanceof Error ? err.message : String(err)}`);
+                        }
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="mt-1"
+                    >
+                      Fix User Type
+                    </Button>
+                  </div>
+                )}
+              </div>
+              
               <PaymentMethodList />
             </div>
           )}

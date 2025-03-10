@@ -1,0 +1,83 @@
+# Database Policies To-Do List
+# This file outlines the policies needed for each table in the database
+
+Properties Policies:
+  ☐ Owners can see only their own properties
+  ☐ Owners can only create properties where they are the owner
+  ☐ Owners can only update their own properties
+  ☐ Owners can only delete their own properties
+  ☐ Cleaners can see properties for new/quoted jobs
+  ☐ Cleaners can see properties for jobs assigned to them
+
+Property Images Policies:
+  ☐ Owners can see images for their own properties
+  ☐ Cleaners can see images for new/quoted jobs
+  ☐ Cleaners can see images for jobs assigned to them
+  ☐ Owners can only add images to their own properties
+  ☐ Owners can only update images for their own properties
+  ☐ Owners can only delete images for their own properties
+
+Job Requests Policies:
+  ☐ Owners can see their own job requests
+  ☐ Cleaners can see all new/quoted jobs
+  ☐ Cleaners can see jobs assigned to them
+  ☐ Owners can create job requests
+  ☐ Owners can update their own job requests
+  ☐ Cleaners can update jobs assigned to them
+  ☐ Owners can delete their own new job requests
+
+Quotes Policies:
+  ☐ Cleaners can see their own quotes
+  ☐ Owners can see quotes for their job requests
+  ☐ Cleaners can submit quotes
+  ☐ Cleaners can update their own quotes
+  ☐ Owners can update quotes for their jobs (e.g., accept)
+  ☐ Cleaners can delete their own quotes
+
+Profiles Policies:
+  ☐ All authenticated users can see all profiles
+  ☐ Users can only update their own profile
+
+Payments Policies:
+  ☐ Cleaners can see payments for jobs assigned to them
+  ☐ Owners can see payments for their jobs
+  ☐ Owners can create payments for their jobs
+  ☐ Owners can update payments they created
+  ☐ Cleaners can update payment status for payments to them
+
+Reviews Policies:
+  ☐ All authenticated users can see all reviews
+  ☐ Users can create reviews for completed jobs
+  ☐ Users can update their own reviews
+  ☐ Users can delete their own reviews
+
+Implementation Order:
+  1. First implement properties and property_images policies
+  2. Then implement profiles policies
+  3. Then implement job_requests policies
+  4. Then implement quotes policies
+  5. Implement payment and review policies
+
+Temporary Fix - Disable Quotes RLS:
+  As a temporary solution, we can drop all quotes policies and disable RLS for the quotes table.
+  
+  Security Implications:
+    ☐ Any authenticated user will be able to see all quotes in the database
+    ☐ Any authenticated user could technically create, update, or delete quotes
+  
+  Functional Implications:
+    ☐ The application will work again - job details and quotes will be visible
+    ☐ Cleaners will be able to submit quotes
+    ☐ Homeowners will be able to accept quotes
+  
+  Mitigating Factors:
+    ☐ The front-end application still enforces business rules (cleaners can only see/submit quotes for certain jobs)
+    ☐ Job requests still have RLS, so the overall system security isn't completely compromised
+    ☐ This is a temporary solution while you troubleshoot the recursive policies
+  
+  Recommended Safeguards:
+    ☐ Keep this as a short-term fix only
+    ☐ Consider adding application-level validation to ensure only appropriate users can modify quotes
+    ☐ Plan to re-enable RLS with non-recursive policies as soon as possible
+  
+  Overall, this approach represents a compromise between functionality and security, prioritizing getting the application working while accepting a temporary reduction in database-level security. For a development or testing environment, this is often an acceptable trade-off.

@@ -21,11 +21,18 @@ export const PaymentMethodList: React.FC = () => {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleAdd = () => {
+    console.log('Opening payment method form');
     setShowAddForm(true);
   };
 
   const handleAddSuccess = () => {
+    console.log('Payment method added successfully, closing form');
     setShowAddForm(false);
+    
+    // Force refresh of the list to ensure the new payment method is displayed
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   };
 
   const handleConfirmDelete = async () => {
@@ -63,6 +70,8 @@ export const PaymentMethodList: React.FC = () => {
 
 
   if (error) {
+    console.log("Payment methods error:", error.message);
+    
     // For database table not found errors, show empty state
     if (error.message && (
         error.message.includes("relation") && 

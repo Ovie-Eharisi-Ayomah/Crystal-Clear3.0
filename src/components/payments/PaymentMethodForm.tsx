@@ -25,8 +25,9 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent default form submission
     setError(null);
+    console.log('Submitting payment method form');
 
     try {
       // Validate form
@@ -77,9 +78,16 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
         })
       };
 
-      await addPaymentMethod(paymentMethodData);
+      console.log('Payment method data to be added:', paymentMethodData);
+      
+      // Call the addPaymentMethod function
+      const result = await addPaymentMethod(paymentMethodData);
+      console.log('Payment method added successfully:', result);
+      
+      // Call onSuccess to close the form
       onSuccess();
     } catch (err) {
+      console.error('Error in handleSubmit:', err);
       setError(err instanceof Error ? err.message : 'Failed to add payment method');
     }
   };
@@ -200,8 +208,13 @@ export const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
             Cancel
           </Button>
           <Button 
-            type="submit"
+            type="button"
             isLoading={isLoading}
+            onClick={(e) => {
+              e.preventDefault();
+              console.log('Button clicked directly');
+              handleSubmit(e);
+            }}
           >
             Add Payment Method
           </Button>

@@ -47,17 +47,39 @@ export function usePaymentMethods() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // Log re-renders and state changes
+  console.log('usePaymentMethods hook rendered, payment methods count:', paymentMethods.length);
+
   useEffect(() => {
     let isMounted = true;
     
     const loadPaymentMethods = async () => {
       if (!user) {
+        console.log('No user found in usePaymentMethods hook');
         return;
       }
+      
+      // Debug user information to check if user is properly identified as a cleaner
+      console.log('User in usePaymentMethods:', {
+        id: user.id,
+        email: user.email,
+        userType: user.user_metadata?.user_type,
+      });
       
       setIsLoading(true);
       
       try {
+        // First check if the user is a cleaner - if not, we shouldn't even try to load payment methods
+        if (user.user_metadata?.user_type !== 'cleaner') {
+          console.warn('User is not a cleaner, not loading payment methods');
+          if (isMounted) {
+            setError(new Error('User is not a cleaner. Payment methods are only available for cleaners.'));
+            setIsLoading(false);
+          }
+          return;
+        }
+        
+        console.log('Fetching payment methods for cleaner:', user.id);
         const { data, error: fetchError } = await supabase
           .from('cleaner_payment_methods')
           .select('*')
@@ -79,6 +101,8 @@ export function usePaymentMethods() {
         }
         
         if (fetchError) throw fetchError;
+        
+        console.log('Payment methods loaded:', data?.length || 0);
         
         if (isMounted) {
           setPaymentMethods(data || []);
@@ -108,6 +132,13 @@ export function usePaymentMethods() {
       throw new Error('User must be authenticated to add a payment method');
     }
     
+    // Double-check user type to avoid errors
+    if (user.user_metadata?.user_type !== 'cleaner') {
+      console.error('Cannot add payment method - user is not a cleaner:', user.user_metadata);
+      throw new Error('Payment methods can only be added by cleaners. User type is not set correctly.');
+    }
+    
+    console.log('Starting to add payment method:', paymentMethodData);
     setIsLoading(true);
     setError(null);
     
@@ -115,16 +146,24 @@ export function usePaymentMethods() {
       // Check if this is the first payment method and set as default if so
       if (paymentMethods.length === 0) {
         paymentMethodData.is_default = true;
+        console.log('First payment method, setting as default');
       }
       
       // If setting this as default, update all other methods to not be default
       if (paymentMethodData.is_default) {
-        await supabase
+        console.log('Setting all other payment methods as non-default');
+        const { error: updateError } = await supabase
           .from('cleaner_payment_methods')
           .update({ is_default: false })
           .eq('cleaner_id', user.id);
+          
+        if (updateError) {
+          console.warn('Error updating other payment methods:', updateError);
+          // Continue anyway, not critical
+        }
       }
       
+      console.log('Inserting new payment method for cleaner:', user.id);
       const { data, error: insertError } = await supabase
         .from('cleaner_payment_methods')
         .insert([{
@@ -134,8 +173,12 @@ export function usePaymentMethods() {
         .select()
         .single();
       
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Error inserting payment method:', insertError);
+        throw insertError;
+      }
       
+      console.log('Payment method added successfully:', data);
       setPaymentMethods(prevMethods => [data, ...prevMethods]);
       return data;
     } catch (err) {
